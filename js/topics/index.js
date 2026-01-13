@@ -16,6 +16,15 @@ export const TOPICS = [
   topicModule: () => import("./sza1.topic.js"),
   quizModule: () => import("./sza1.quiz.js"),
 },
+{
+  id: "sza2",
+  code: "SzA2",
+  title: "Az adattér, adatmanipulációs fa",
+  group: "SzA",
+  order: 2,
+  topicModule: () => import("./sza2.topic.js"),
+  quizModule: () => import("./sza2.quiz.js"),
+},
 
 
 ];
