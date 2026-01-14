@@ -167,28 +167,67 @@ konkrét implementáció adatmanipulációs lehetőségeit.
       és vektor/SIMD típusok.
     </p>
 
-    <h3>Címzési módok</h3>
+<h3>Címzési módok</h3>
+<p>
+A címzés lényege a <b>címszámítási algoritmus</b>, amely a tényleges operanduscímet
+több, egymástól független elem kombinációjából állítja elő.
+</p>
+
+<ul>
+  <li>
+    <b>Címszámítás</b>
     <ul>
-      <li><b>Azonnali (Immediate):</b> Az adat maga az utasítás része.</li>
-      <li><b>Regiszteres:</b> Az adat egy regiszterben van.</li>
       <li>
-        <b>Közvetlen (Direct):</b>
-        Az utasítás tartalmazza a memória pontos címét.
+        <b>Abszolút címzés:</b>
+        Az utasítás a teljes, valós címet tartalmazza.
+        Hosszú cím miatt nem gazdaságos, ezért ritkán használjuk.
       </li>
       <li>
-        <b>Közvetett (Indirect):</b>
-        Egy regiszter vagy memóriahely tartalmazza a tényleges címet.
-      </li>
-      <li>
-        <b>Relatív:</b>
-        A programszámlálóhoz (PC) képest megadott eltolás.
+        <b>Relatív címzés:</b>
+        A címet egy <b>báziscímhez</b> viszonyítva határozzuk meg.
+        <br />
+        <i>S(bázis) + D(eltolás)</i>
+        <br />
+        A bázis lehet például:
+        <ul>
+          <li>PC (Programsor-számláló)</li>
+          <li>Stack pointer (verem teteje)</li>
+          <li>Indexregiszter</li>
+        </ul>
       </li>
     </ul>
+  </li>
 
-    <h3>Indexelés</h3>
-    <p>
-      Egy báziscímhez (pl. tömb kezdete) hozzáadunk egy indexregiszter tartalmát.
-      Ez teszi lehetővé a tömbelemek hatékony elérését ciklusokban.
-    </p>
+  <li>
+    <b>Cím módosítás (opcionális):</b>
+    <ul>
+      <li>Indexelés</li>
+      <li>Automatikus inkrementálás / dekrementálás</li>
+    </ul>
+    Célja a következő operandus címének minél egyszerűbb meghatározása.
+  </li>
+
+  <li>
+    <b>Deklarált és tényleges cím</b>
+    <ul>
+      <li>A cím lehet <b>direkt</b> vagy <b>indirekt</b></li>
+      <li>A cím lehet <b>valós</b> vagy <b>virtuális</b></li>
+    </ul>
+  </li>
+
+  <li>
+    <b>Egyedi és blokkos címzés</b>
+    <br />
+    A blokkos címzés a legjellemzőbb, különösen adatstruktúrák esetén.
+  </li>
+</ul>
+
+<h3>Indexelés</h3>
+<p>
+Indexelés során egy báziscímhez hozzáadjuk egy indexregiszter értékét,
+ami különösen hatékony adatblokkok (pl. tömbök) elemeinek elérésére,
+különösen ciklusokban.
+</p>
+
   `,
 };
