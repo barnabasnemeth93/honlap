@@ -134,8 +134,8 @@ export const topic = {
     <h2>3. Az adatmanipulációs fa</h2>
 
     <p>
-      Az adatmanipulációs fa a processzor műveletvégző képességeit
-      és az adatokon végrehajtható átalakításokat írja le.
+Megmutatja a potenciális adatmanipulációs lehetőségeket. Bizonyos részfái megmutatják egy
+konkrét implementáció adatmanipulációs lehetőségeit.
     </p>
 
     <ul>
@@ -150,9 +150,12 @@ export const topic = {
 
     <h3>Szintjei</h3>
     <ol>
-      <li><b>Mikroműveleti szint:</b> Az ALU belső elemi lépései.</li>
-      <li><b>Utasításszint (ISA):</b> A gépi kódú utasítások (pl. ADD, MOV).</li>
-      <li><b>Algoritmus/Szoftver szint:</b> Összetett műveletsorozatok.</li>
+      <li><b>Adattípusok</b> </li>
+      <li><b>Műveletek</b> </li>
+            <li><b>Operandusok típusai</b> </li>
+      <li><b>Címzési módok</b> </li>
+      <li><b>Gépi kódok</b> </li>
+
     </ol>
 
     <h3>Adattípusok</h3>
