@@ -432,3 +432,17 @@ body{
   transform: translateY(4px);
   opacity: 1;
 }
+
+
+.prose .figure{
+  margin: 12px 0;
+}
+
+.prose .figure img{
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
