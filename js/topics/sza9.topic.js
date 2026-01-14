@@ -72,7 +72,7 @@ export const topic = {
   
       <figure class="figure">
         <img
-          src="assets/figures/sza9-megszakitasok-folyamata.png"
+          src="https://i.ibb.co/CDTVVWy/sza9-megszakitasok-folyamata.png"
           alt="Megszakítások folyamata ábra"
         />
       </figure>
