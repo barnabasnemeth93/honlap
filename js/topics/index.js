@@ -35,6 +35,16 @@ export const TOPICS = [
   quizModule: () => import("./sza9.quiz.js"),
 },
 
+{
+  id: "sza4",
+  code: "SzA4",
+  title: "Az aritmetikai egységek felépítése I.",
+  group: "SzA",
+  order: 4,
+  topicModule: () => import("./sza4.topic.js"),
+  quizModule: () => import("./sza4.quiz.js"),
+},
+
 
 
 ];
