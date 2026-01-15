@@ -1,12 +1,5 @@
 export const TOPICS = [
-  {
-    id: "sza3",
-    code: "SzA3",
-    title: "Szekvenciális utasításvégrehajtás, utasítás- és operandustípusok, állapottér, állapotműveletek",
-    tags: ["utasítás", "fetch", "decode", "PC", "operandus", "architektúra"],
-    topicModule: () => import("./sza3.topic.js"),
-    quizModule: () => import("./sza3.quiz.js"),
-  },
+
 {
   id: "sza1",
   code: "SzA1",
@@ -25,16 +18,17 @@ export const TOPICS = [
   topicModule: () => import("./sza2.topic.js"),
   quizModule: () => import("./sza2.quiz.js"),
 },
-{
-  id: "sza9",
-  code: "SzA9",
-  title: "Megszakítási rendszer",
-  group: "SzA",
-  order: 9,
-  topicModule: () => import("./sza9.topic.js"),
-  quizModule: () => import("./sza9.quiz.js"),
-},
 
+{
+  id: "sza3",
+  code: "SzA3",
+  title: "Szekvenciális utasításvégrehajtás, utasítás- és operandustípusok, állapottér, állapotműveletek",
+  group: "SzA",
+  order: 3,
+  tags: ["utasítás", "fetch", "decode", "PC", "operandus", "architektúra"],
+  topicModule: () => import("./sza3.topic.js"),
+  quizModule: () => import("./sza3.quiz.js"),
+},
 {
   id: "sza4",
   code: "SzA4",
@@ -43,6 +37,16 @@ export const TOPICS = [
   order: 4,
   topicModule: () => import("./sza4.topic.js"),
   quizModule: () => import("./sza4.quiz.js"),
+},
+
+{
+  id: "sza9",
+  code: "SzA9",
+  title: "Megszakítási rendszer",
+  group: "SzA",
+  order: 9,
+  topicModule: () => import("./sza9.topic.js"),
+  quizModule: () => import("./sza9.quiz.js"),
 },
 
 
