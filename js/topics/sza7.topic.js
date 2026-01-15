@@ -298,7 +298,57 @@ export const topic = {
         </ul>
       </div>
   
-      <p>PCI (párhuzamos) és PCIe</p>
+      <h3>PCI (párhuzamos) és PCIe</h3>
+
+<table class="table table-compare">
+  <thead>
+    <tr>
+      <th>PCI</th>
+      <th>PCIe</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr>
+      <td>Megosztott párhuzamos architektúrát használ</td>
+      <td>
+        Pont-pont topológia (csillag pontos rendszer): Van egy buszvezérlő és ehhez
+        kapcsolódnak a perifériák különböző vezetékeken keresztül
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        Minden eszköz közös cím/adat/vezérlő vonalat használ (egy sérülése esetén egyik sem működik)
+      </td>
+      <td>Full Duplex bármely két végpont között</td>
+    </tr>
+
+    <tr>
+      <td>
+        Több master esetén arbitrálás (buszfoglalás) történik. Egy időben egyetlen master működhet egy irányban
+      </td>
+      <td>Több végpont párhuzamosan kommunikálhat</td>
+    </tr>
+
+    <tr>
+      <td>Egyetlen nagy teljesítményű, de közös busz</td>
+      <td>
+        Többféle szélességű aljzat (1X,4X,8X,16X,32X &lt;- ezek a linkek),
+        tehát rugalmas (GPU-k pl 16X-esek)
+      </td>
+    </tr>
+
+    <tr>
+      <td></td>
+      <td>
+        A buszprotokoll csomagokba ágyazza be az adatokat (működési elv, mint pl Ethernet),
+        így nem kell szinkronizálni
+      </td>
+    </tr>
+  </tbody>
+</table>
+
     </div>
   </div>
   

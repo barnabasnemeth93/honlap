@@ -256,6 +256,8 @@ body{
   background: var(--panel);
 }
 
+
+
 .prose .table th,
 .prose .table td{
   padding:12px 12px;
@@ -303,6 +305,12 @@ body{
   font-weight:700;
   color: color-mix(in srgb, var(--text) 85%, var(--muted));
   width: 38%;
+}
+
+/* PCI vs PCIe: ne legyen kiemelt az első oszlop */
+.prose .table-compare tbody td:first-child{
+  font-weight:400;
+  color: var(--text);
 }
 
 
