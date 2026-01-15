@@ -38,6 +38,18 @@ export const TOPICS = [
   topicModule: () => import("./sza4.topic.js"),
   quizModule: () => import("./sza4.quiz.js"),
 },
+{
+  id: "sza7",
+  code: "SzA7",
+  title: "Külső buszrendszer",
+  group: "SzA",
+  order: 7,
+  topicModule: () => import("./sza7.topic.js"),
+  quizModule: () => import("./sza7.quiz.js"),
+  summaryModule: () => import("./summaries/sza7.summary.js"),
+},
+
+
 
 {
   id: "sza9",

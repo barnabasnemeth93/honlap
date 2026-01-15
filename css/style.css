@@ -445,3 +445,121 @@ body{
   border: 1px solid var(--border);
   background: var(--panel);
 }
+
+/* ====== SzA jegyzet "tanulóbarát" blokkok ====== */
+.prose .learn-block{
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  border-radius: 14px;
+  padding: 12px 12px;
+  margin: 12px 0;
+}
+
+.prose .learn-title{
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose .learn-body p:last-child{ margin-bottom: 0; }
+
+/* alcím-kártya a learn-blockon belül */
+.prose .subblock{
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel2) 75%, transparent);
+  border-radius: 14px;
+  padding: 12px;
+  margin: 10px 0;
+}
+
+.prose .subblock-title{
+  font-weight: 850;
+  margin-bottom: 6px;
+}
+
+/* 2 oszlopos grid (a te .grid-edhez illeszkedve) */
+.prose .grid-2{
+  grid-template-columns: 1fr 1fr;
+}
+
+/* előny/hátrány pillák */
+.prose .pill{
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border-radius: 14px;
+  padding: 10px 10px;
+}
+
+.prose .pill-title{
+  font-weight: 850;
+  margin-bottom: 6px;
+}
+
+/* Vezérlővonal "4 típus" rács */
+.prose .control-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.prose .control-card{
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel2) 70%, transparent);
+  border-radius: 14px;
+  padding: 10px 10px;
+}
+
+.prose .control-title{
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+/* listák kicsit rendezettebbek blokkokban */
+.prose .learn-block ul{
+  margin: 8px 0 0 20px;
+}
+
+.prose .learn-block li{
+  margin: 3px 0;
+}
+
+/* mobilon: egy oszlop */
+@media (max-width: 920px){
+  .prose .grid-2{ grid-template-columns: 1fr; }
+  .prose .control-grid{ grid-template-columns: 1fr; }
+}
+
+.prose .learn-title .num{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel2) 70%, transparent);
+  margin-right: 8px;
+  font-weight: 900;
+  color: color-mix(in srgb, var(--text) 85%, var(--muted));
+}
+
+
+/* opcionális: summary modalban kicsit kompaktabb */
+#summaryHtml.prose h2 { margin-top: 14px; }
+#summaryHtml.prose ul { margin-bottom: 10px; }
+
+
+.prose .tag{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background: color-mix(in srgb, var(--panel2) 75%, transparent);
+  color: color-mix(in srgb, var(--text) 86%, var(--muted));
+  font-size: 12px;
+  font-weight: 800;
+  margin: 0 4px 4px 0;
+}
