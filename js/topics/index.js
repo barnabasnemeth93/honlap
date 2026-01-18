@@ -83,6 +83,33 @@ export const TOPICS = [
   quizModule: () => import("./sza10.quiz.js"),
 },
 
+{
+  id: "sza11",
+  code: "SzA11",
+  title:
+    "Vezérlésfüggőségek, teljesítmény korlátozó hatásuk csökkentése és a szekvenciális konzisztencia",
+  group: "SzA",
+  order: 11,
+  tags: [
+    "vezérlésfüggőség",
+    "elágazás",
+    "JMP",
+    "NOP",
+    "branch prediction",
+    "statikus",
+    "dinamikus",
+    "spekulatív",
+    "ROB",
+    "szekvenciális konzisztencia",
+    "memóriakonzisztencia",
+    "precíz megszakítás",
+    "kivételkezelés"
+  ],
+  topicModule: () => import("./sza11.topic.js"),
+  quizModule: () => import("./sza11.quiz.js"),
+},
+
+
 
 
 ];
