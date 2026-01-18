@@ -61,6 +61,28 @@ export const TOPICS = [
   quizModule: () => import("./sza9.quiz.js"),
 },
 
+{
+  id: "sza10",
+  code: "SzA10",
+  title: "Számítógép architektúrák osztályozása és az adatfüggőségek",
+  group: "SzA",
+  order: 10,
+  tags: [
+    "architektúra",
+    "Flynn",
+    "SIMD",
+    "MIMD",
+    "adatfüggőség",
+    "RAW",
+    "WAR",
+    "WAW",
+    "pipeline",
+    "párhuzamosság"
+  ],
+  topicModule: () => import("./sza10.topic.js"),
+  quizModule: () => import("./sza10.quiz.js"),
+},
+
 
 
 ];
