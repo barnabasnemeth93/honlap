@@ -109,6 +109,123 @@ export const TOPICS = [
   quizModule: () => import("./sza11.quiz.js"),
 },
 
+{
+  id: "sza12",
+  code: "SzA12",
+  title:
+    "A futószalag (pipeline) elvű utasítás-végrehajtás, pipeline CPU-k",
+  group: "SzA",
+  order: 12,
+  tags: [
+    "pipeline",
+    "futószalag",
+    "utasítás-végrehajtás",
+    "fetch",
+    "decode",
+    "execute",
+    "writeback",
+    "prefetching",
+    "átlapolt végrehajtás",
+    "újrafeldolgozás",
+    "memóriasávszélesség",
+    "cache",
+    "elágazások"
+  ],
+  topicModule: () => import("./sza12.topic.js"),
+  quizModule: () => import("./sza12.quiz.js"),
+},
+
+{
+  id: "sza13",
+  code: "SzA13",
+  title:
+    "Szuperskalár architektúrák, első generációs (keskeny) szuperskalár CPU-k",
+  group: "SzA",
+  order: 13,
+  tags: [
+    "szuperskalár",
+    "kibocsátás",
+    "kibocsátási ráta",
+    "Harvard architektúra",
+    "Neumann elv",
+    "I-cache",
+    "D-cache",
+    "RISC",
+    "CISC",
+    "utasításablak",
+    "közvetlen kibocsátás",
+    "végrehajtási modell",
+    "szélesség",
+    "szűk keresztmetszet"
+  ],
+  topicModule: () => import("./sza13.topic.js"),
+  quizModule: () => import("./sza13.quiz.js"),
+},
+{
+  id: "sza14",
+  code: "SzA14",
+  title: "Második generációs (széles) szuperskalár processzorok",
+  group: "SzA",
+  order: 14,
+  tags: [
+    "szuperskalár",
+    "második generáció",
+    "széles",
+    "kibocsátás",
+    "kibocsátási szűk keresztmetszet",
+    "dinamikus utasítás-ütemezés",
+    "pufferelt kibocsátás",
+    "kiküldés",
+    "sorrenden kívüli végrehajtás",
+    "Stréber modell",
+    "regiszter-átnevezés",
+    "átnevezési regiszter",
+    "WAR",
+    "WAW",
+    "ROB",
+    "reorder buffer",
+    "spekulatív bit",
+    "rekonverzió",
+    "kiírási szabályok"
+  ],
+  topicModule: () => import("./sza14.topic.js"),
+  quizModule: () => import("./sza14.quiz.js"),
+},
+
+{
+  id: "sza15",
+  code: "SzA15",
+  title:
+    "Harmadik generációs szuperskalár processzorok – utasításon belüli párhuzamos végrehajtás",
+  group: "SzA",
+  order: 15,
+  tags: [
+    "harmadik generáció",
+    "szuperskalár",
+    "utasításon belüli párhuzamosság",
+    "ILP",
+    "duál műveleti utasítás",
+    "multiply-add",
+    "SIMD",
+    "multimédia",
+    "2D",
+    "3D",
+    "fixpontos SIMD",
+    "lebegőpontos SIMD",
+    "MMX",
+    "SSE",
+    "pakolt adattípus",
+    "128 bit",
+    "hangfeldolgozás",
+    "képfeldolgozás",
+    "vektoros feldolgozás"
+  ],
+  topicModule: () => import("./sza15.topic.js"),
+  quizModule: () => import("./sza15.quiz.js"),
+},
+
+
+
 
 
 
