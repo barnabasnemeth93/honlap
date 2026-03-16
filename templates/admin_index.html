@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Admin – Városnyomozó{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h2>Admin</h2>
+  <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">Vissza a játéktérre</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6 col-lg-4">
+    <a href="{{ url_for('admin.campaigns') }}" class="card text-decoration-none text-dark h-100 border-primary border-opacity-25 hover-shadow">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="fs-2 me-3"><i class="fa-solid fa-clipboard-list text-primary"></i></span>
+          <h5 class="card-title mb-0">Kampányok</h5>
+        </div>
+        <p class="card-text text-muted small mb-0">Kampányok kezelése, nyomok (clues) hozzáadása és szerkesztése.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6 col-lg-4">
+    <a href="{{ url_for('admin.achievements') }}" class="card text-decoration-none text-dark h-100 border-warning border-opacity-25 hover-shadow">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="fs-2 me-3"><i class="fa-solid fa-trophy text-warning"></i></span>
+          <h5 class="card-title mb-0">Achievements</h5>
+        </div>
+        <p class="card-text text-muted small mb-0">Achievementek létrehozása és aktív/inaktív váltása.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6 col-lg-4">
+    <a href="{{ url_for('admin.players') }}" class="card text-decoration-none text-dark h-100 border-info border-opacity-25 hover-shadow">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="fs-2 me-3"><i class="fa-solid fa-users text-info"></i></span>
+          <h5 class="card-title mb-0">Játékosok</h5>
+        </div>
+        <p class="card-text text-muted small mb-0">Regisztrált játékosok listája, kampány előrehaladás (jelszó nélkül).</p>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}

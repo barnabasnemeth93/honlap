@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Admin – Kampányok{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2>Kampányok</h2>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary btn-sm">← Admin</a>
+    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">Vissza</a>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="mb-3">Új kampány</h5>
+    <form method="post" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Cím <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Slug <span class="text-danger">*</span></label>
+        <input type="text" name="slug" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Státusz</label>
+        <select name="status" class="form-select">
+          <option value="published">published</option>
+          <option value="draft">draft</option>
+          <option value="archived">archived</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Leírás</label>
+        <textarea name="description" class="form-control js-ckeditor" rows="3"></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Bevezető (intro)</label>
+        <textarea name="intro" class="form-control js-ckeditor" rows="3"></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Történet célja (story goal)</label>
+        <textarea name="story_goal" class="form-control js-ckeditor" rows="3"></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Befejezési üzenet (completion message)</label>
+        <textarea name="completion_message" class="form-control js-ckeditor" rows="4"></textarea>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Borítókép URL</label>
+        <input type="url" name="cover_image_url" class="form-control" placeholder="https://...">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Kezdő helyszín</label>
+        <input type="text" name="start_location" class="form-control" placeholder="Pl. Hősök tere">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Város</label>
+        <input type="text" name="city" class="form-control" placeholder="Budapest">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Kezdő lat</label>
+        <input type="number" name="start_lat" class="form-control" step="any" placeholder="47.5079">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Kezdő lng</label>
+        <input type="number" name="start_lng" class="form-control" step="any" placeholder="19.0402">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Idő (perc)</label>
+        <input type="number" name="estimated_minutes" class="form-control" min="1">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Táv (km)</label>
+        <input type="number" name="distance_km" class="form-control" min="0" step="0.01">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Nehézség</label>
+        <select name="difficulty" class="form-select">
+          <option value="">—</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Min. életkor</label>
+        <input type="number" name="min_age" class="form-control" min="0">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Kategória ID</label>
+        <input type="number" name="category_id" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Befejezési XP</label>
+        <input type="number" name="xp_reward" class="form-control" min="0" placeholder="Üres = nehézség">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Befejezési coin</label>
+        <input type="number" name="coins_reward" class="form-control" min="0" placeholder="Üres = nehézség">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Quest sorozat slug</label>
+        <input type="text" name="quest_series_slug" class="form-control" placeholder="pl. budapest-explorer">
+      </div>
+      <div class="col-12">
+        <div class="form-check">
+          <input type="checkbox" name="is_active" class="form-check-input" value="1" id="new_is_active" checked>
+          <label class="form-check-label" for="new_is_active">Aktív</label>
+        </div>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Mentés</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped align-middle">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Cím</th>
+      <th>Slug</th>
+      <th>Aktív</th>
+      <th>Művelet</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in campaigns %}
+    <tr>
+      <td>{{ c.id }}</td>
+      <td>{{ c.title }}</td>
+      <td><code>{{ c.slug }}</code></td>
+      <td>
+        {% if c.is_active %}<span class="badge bg-success">aktív</span>{% else %}<span class="badge bg-secondary">inaktív</span>{% endif %}
+      </td>
+      <td>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.clues', cid=c.id) }}">Nyomok</a>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.edit_campaign', cid=c.id) }}">Szerkesztés</a>
+        <a class="btn btn-sm btn-outline-warning" href="{{ url_for('admin.toggle_campaign', cid=c.id) }}">Aktív váltás</a>
+        <a class="btn btn-sm btn-outline-danger" href="{{ url_for('admin.delete_campaign', cid=c.id) }}">Törlés</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% block scripts %}
+  {{ super() }}
+  <script src="https://cdn.ckeditor.com/4.25.1/standard/ckeditor.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll("textarea.js-ckeditor").forEach(function (el) {
+        if (el.getAttribute("data-ckeditor-initialized") === "1") return;
+        el.setAttribute("data-ckeditor-initialized", "1");
+        CKEDITOR.replace(el, {
+          removeButtons: "Source,Image,Flash,Smiley,SpecialChar,PageBreak,Iframe",
+          height: 200,
+        });
+      });
+    });
+  </script>
+{% endblock %}
+{% endblock %}

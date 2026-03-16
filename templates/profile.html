@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% block title %}Profil – {{ current_user.username }}{% endblock %}
+{% block content %}
+
+<div class="container" style="max-width: 920px;">
+  <div class="card border-0 shadow-sm overflow-hidden">
+
+    <!-- Header with current avatar -->
+    <div class="p-4" style="background: linear-gradient(135deg, #2563EB, #1E40AF);">
+      <div class="d-flex align-items-center gap-3">
+        <img
+          src="{{ current_user.avatar_url or url_for('static', filename='img/avatar_placeholder.png') }}"
+          alt="Jelenlegi avatar"
+          class="rounded-circle border border-3 border-light"
+          style="width: 96px; height: 96px; object-fit: cover; background:#fff;">
+        <div class="text-white">
+          <h3 class="mb-0">{{ current_user.username }}</h3>
+          <div class="profile-rank-badge opacity-90 small">{{ gamification.current_rank }}</div>
+          <div class="opacity-75">{{ current_user.email }}</div>
+        </div>
+        {% if current_user.avatar_url %}
+          <form method="post" class="ms-auto"
+                onsubmit="return confirm('Biztosan eltávolítod az avatart?');">
+            <input type="hidden" name="action" value="remove">
+            <button type="submit" class="btn btn-outline-light btn-sm">Avatar eltávolítása</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Gamification: Rank + Coins -->
+      <div class="profile-gamification row g-3 mb-4">
+        <div class="col-12 col-md-7">
+          <div class="profile-rank-card card h-100">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-2 text-muted">Rang</h6>
+              <div class="profile-rank-name">{{ gamification.current_rank }}</div>
+              {% if gamification.is_max_rank %}
+                <p class="small text-success mb-0 mt-2">Elérted a legmagasabb rangot</p>
+                <div class="progress mt-2" style="height: 8px;">
+                  <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                </div>
+              {% else %}
+                <p class="small mb-1 mt-2">{{ gamification.current_xp }} / {{ gamification.next_rank_xp }} XP a következő rangig</p>
+                <div class="progress" style="height: 8px;">
+                  <div class="progress-bar bg-primary" role="progressbar" style="width: {{ gamification.xp_progress_percent }}%"></div>
+                </div>
+                <p class="small text-muted mb-0 mt-1">{{ gamification.xp_to_next }} XP még ({{ gamification.next_rank_name }})</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-5">
+          <div class="profile-coins-card card h-100">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-2 text-muted">Érmék</h6>
+              <div class="profile-coins-amount">{{ gamification.current_coins }}</div>
+              <p class="small text-muted mb-0 mt-2">Később avatarokhoz, témákhoz és extra tartalmakhoz használható.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+<!-- Read-only identity -->
+<div class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label">Felhasználónév</label>
+    <input class="form-control" value="{{ current_user.username }}" disabled 
+           style="color: black; background-color: #f8f9fa;">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">E-mail</label>
+    <input class="form-control" value="{{ current_user.email }}" disabled 
+           style="color: black; background-color: #f8f9fa;">
+  </div>
+</div>
+
+      <!-- Stats -->
+      <hr class="my-4">
+      <h5 class="mb-3">Statisztikák</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="card bg-light border-0 h-100">
+            <div class="card-body text-center">
+              <div class="fs-3 fw-bold text-primary">{{ stats.clues_solved }}</div>
+              <div class="small text-muted">Megoldott nyom</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card bg-light border-0 h-100">
+            <div class="card-body text-center">
+              <div class="fs-3 fw-bold text-success">{{ stats.campaigns_completed }}</div>
+              <div class="small text-muted">Befejezett kampány</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reward history (ledger) -->
+      <h5 class="mb-3">Jutalom előzmények</h5>
+      {% if reward_log_entries %}
+      <p class="text-muted small mb-2">Legutóbbi jutalmak (XP és érme).</p>
+      <div class="profile-reward-log card mb-4">
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+            {% for entry in reward_log_entries %}
+            <li class="list-group-item d-flex flex-wrap align-items-center gap-2 py-2 profile-reward-log-item">
+              <span class="profile-reward-badges">
+                {% if entry.xp_amount != 0 %}
+                  <span class="badge bg-primary">{% if entry.xp_amount > 0 %}+{% endif %}{{ entry.xp_amount }} XP</span>
+                {% endif %}
+                {% if entry.coin_amount != 0 %}
+                  <span class="badge bg-warning text-dark">{% if entry.coin_amount > 0 %}+{% endif %}{{ entry.coin_amount }} érme</span>
+                {% endif %}
+                {% if entry.xp_amount == 0 and entry.coin_amount == 0 %}
+                  <span class="text-muted small">—</span>
+                {% endif %}
+              </span>
+              <span class="profile-reward-desc text-break">
+                {% if entry.reward_type == 'admin_adjustment' %}<span class="badge bg-secondary me-1">Admin</span>{% endif %}
+                {{ entry.description or entry.reward_type }}
+              </span>
+              <span class="profile-reward-date small text-muted ms-auto">
+                {{ entry.created_at.strftime('%Y.%m.%d. %H:%M') if entry.created_at else '' }}
+              </span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-muted small mb-4">Még nincs jutalom előzmény. Oldj meg nyomokat és fejezz be kampányokat!</p>
+      {% endif %}
+
+      <!-- Achievements: Completed / Incomplete toggle -->
+      <h5 class="mb-3">Achievementek</h5>
+      {% set total_ach = achievements_completed|length + achievements_incomplete|length %}
+      {% if total_ach > 0 %}
+      <p class="text-muted small mb-3">
+        <span class="text-success">{{ achievements_completed|length }} megszerezve</span>
+        <span class="mx-2">·</span>
+        <span>{{ achievements_incomplete|length }} még hátra</span>
+      </p>
+      <div class="achievement-toggle btn-group mb-4" role="group" style="max-width: 100%;">
+        <input type="radio" class="btn-check" name="achievementFilter" id="filterCompleted" autocomplete="off" checked>
+        <label class="btn btn-outline-success" for="filterCompleted">
+          <span class="d-inline-flex align-items-center gap-1">
+            <span>✓</span>
+            <span>Megszerezve</span>
+            <span class="badge bg-success rounded-pill">{{ achievements_completed|length }}</span>
+          </span>
+        </label>
+        <input type="radio" class="btn-check" name="achievementFilter" id="filterIncomplete" autocomplete="off">
+        <label class="btn btn-outline-secondary" for="filterIncomplete">
+          <span class="d-inline-flex align-items-center gap-1">
+            <span>○</span>
+            <span>Még nincs</span>
+            <span class="badge bg-secondary rounded-pill">{{ achievements_incomplete|length }}</span>
+          </span>
+        </label>
+      </div>
+      <div id="achievementPanelCompleted" class="achievement-panel">
+        <div class="row g-3">
+          {% for item in achievements_completed %}
+          <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 border-success achievement-card achievement-card--completed">
+              <div class="card-body d-flex align-items-start gap-3">
+                <div class="achievement-badge-wrap flex-shrink-0">
+                  {% if item.achievement.badge_image_url %}
+                  <img src="{{ item.achievement.badge_image_url }}" alt="" class="achievement-badge-img rounded" loading="lazy">
+                  {% else %}
+                  <div class="achievement-badge-placeholder rounded d-flex align-items-center justify-content-center"><i class="fa-solid fa-trophy"></i></div>
+                  {% endif %}
+                </div>
+                <div class="flex-grow-1 min-width-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <strong class="achievement-name">{{ item.achievement.name }}</strong>
+                    <span class="badge bg-success flex-shrink-0">Megszerezve</span>
+                  </div>
+                  {% if item.achievement.description %}
+                  <p class="small text-muted mb-0 mt-1">{{ item.achievement.description }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if achievements_completed|length == 0 %}
+        <div class="text-center py-5 text-muted">
+          <p class="mb-0">Még nincs megszerzett achievement. Játssz kampányokat és oldj meg nyomokat!</p>
+        </div>
+        {% endif %}
+      </div>
+      <div id="achievementPanelIncomplete" class="achievement-panel d-none">
+        <div class="row g-3">
+          {% for item in achievements_incomplete %}
+          <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 border-secondary achievement-card achievement-card--incomplete">
+              <div class="card-body d-flex align-items-start gap-3">
+                <div class="achievement-badge-wrap flex-shrink-0 opacity-75">
+                  {% if item.achievement.badge_image_url %}
+                  <img src="{{ item.achievement.badge_image_url }}" alt="" class="achievement-badge-img rounded" loading="lazy">
+                  {% else %}
+                  <div class="achievement-badge-placeholder achievement-badge-placeholder--muted rounded d-flex align-items-center justify-content-center"><i class="fa-solid fa-trophy"></i></div>
+                  {% endif %}
+                </div>
+                <div class="flex-grow-1 min-width-0">
+                  <strong class="achievement-name text-body">{{ item.achievement.name }}</strong>
+                  {% if item.achievement.description %}
+                  <p class="small text-muted mb-2 mt-1">{{ item.achievement.description }}</p>
+                  {% endif %}
+                  {% if item.target_value is not none and item.current_value is not none %}
+                  <div class="small mb-1 d-flex justify-content-between">
+                    <span>Előrehaladás</span>
+                    <span>{{ item.current_value }} / {{ item.target_value }}</span>
+                  </div>
+                  <div class="progress" style="height: 6px;">
+                    {% set pct = ((item.current_value / item.target_value * 100) | int) if item.target_value else 0 %}
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ [pct, 100] | min }}%"></div>
+                  </div>
+                  {% else %}
+                  <span class="badge bg-secondary">Még nincs</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if achievements_incomplete|length == 0 %}
+        <div class="text-center py-5 text-success">
+          <p class="mb-0">Minden elérhető achievementet megszereztél! 🎉</p>
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="text-muted">Nincs még megjeleníthető achievement.</p>
+      {% endif %}
+
+      <hr class="my-4">
+
+      <!-- Achievement toggle script -->
+      <script>
+        (function() {
+          var filterCompleted = document.getElementById('filterCompleted');
+          var filterIncomplete = document.getElementById('filterIncomplete');
+          var panelCompleted = document.getElementById('achievementPanelCompleted');
+          var panelIncomplete = document.getElementById('achievementPanelIncomplete');
+          if (!filterCompleted || !panelCompleted) return;
+          function updatePanels() {
+            var showCompleted = filterCompleted.checked;
+            if (showCompleted) {
+              panelCompleted.classList.remove('d-none');
+              if (panelIncomplete) panelIncomplete.classList.add('d-none');
+            } else {
+              panelCompleted.classList.add('d-none');
+              if (panelIncomplete) panelIncomplete.classList.remove('d-none');
+            }
+          }
+          filterCompleted.addEventListener('change', updatePanels);
+          if (filterIncomplete) filterIncomplete.addEventListener('change', updatePanels);
+        })();
+      </script>
+      <style>
+        .achievement-toggle .btn { font-size: 0.9rem; }
+        .achievement-toggle .btn-check:checked + .btn-outline-success { background-color: var(--bs-success); color: #fff; }
+        .achievement-toggle .btn-check:checked + .btn-outline-secondary { background-color: var(--bs-secondary); color: #fff; }
+        .achievement-badge-wrap { width: 52px; height: 52px; }
+        .achievement-badge-img { width: 52px; height: 52px; object-fit: cover; }
+        .achievement-badge-placeholder { width: 52px; height: 52px; background: rgba(25, 135, 84, 0.2); font-size: 1.5rem; }
+        .achievement-badge-placeholder--muted { background: rgba(108, 117, 125, 0.25); }
+        .achievement-card--completed { background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), transparent); }
+        .achievement-card--incomplete { background: rgba(0,0,0,0.02); }
+        .achievement-name { color: #fff !important; }
+      </style>
+
+      <!-- DiceBear avatar picker -->
+      <h5 class="mb-3">Új avatar kiválasztása (DiceBear – Adventurer)</h5>
+      <form method="post" class="d-flex flex-column gap-3">
+        <input type="hidden" name="action" value="set_dicebear">
+        <input type="hidden" id="avatarUrlInput" name="avatar_url" />
+
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <img id="avatarPreview"
+               src="{{ current_user.avatar_url or url_for('static', filename='img/avatar_placeholder.png') }}"
+               alt="Előnézet"
+               class="rounded border"
+               style="width: 96px; height: 96px; object-fit: cover; background:#f8f9fa;">
+
+          <div class="d-flex gap-2">
+            <button type="button" id="randomizeAll" class="btn btn-outline-secondary btn-sm">Véletlen</button>
+            <button type="submit" class="btn btn-success btn-sm">Mentés</button>
+          </div>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-muted">Szem</label>
+            <select id="traitEyes" class="form-select form-select-sm">
+              <option value="">(auto)</option>
+              <option value="variant01">Variáns 1</option>
+              <option value="variant02">Variáns 2</option>
+              <option value="variant03">Variáns 3</option>
+              <option value="variant04">Variáns 4</option>
+              <option value="variant05">Variáns 5</option>
+              <option value="variant06">Variáns 6</option>
+              <option value="variant07">Variáns 7</option>
+            </select>
+          </div>
+
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-muted">Száj</label>
+            <select id="traitMouth" class="form-select form-select-sm">
+              <option value="">(auto)</option>
+              <option value="variant01">Variáns 1</option>
+              <option value="variant02">Variáns 2</option>
+              <option value="variant03">Variáns 3</option>
+              <option value="variant04">Variáns 4</option>
+              <option value="variant05">Variáns 5</option>
+              <option value="variant06">Variáns 6</option>
+              <option value="variant07">Variáns 7</option>
+            </select>
+          </div>
+
+          <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Bőrszín</label>
+            <input id="traitSkinColor" type="color" class="form-control form-control-sm" value="#ffdbb4" />
+          </div>
+
+          <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Hajszín</label>
+            <input id="traitHairColor" type="color" class="form-control form-control-sm" value="#4a312c" />
+          </div>
+
+          <div class="col-6 col-md-2">
+            <label class="form-label small text-muted">Háttérszín</label>
+            <input id="traitBgColor" type="color" class="form-control form-control-sm" value="#b6e3f4" />
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Config
+  const STYLE = 'adventurer';
+  const SKIN_PALETTE = ['#ffdbb4','#f1c27d','#e0ac69','#c68642','#8d5524'];
+  const HAIR_PALETTE = ['#000000','#4a312c','#8b5a2b','#a55728','#b5835a','#dba36a','#e6c79c','#ffffff'];
+  const BG_PALETTE   = ['#b6e3f4','#c0aede','#d1d4f9','#ffd5dc','#ffdfbf','#d1f0c1','#f2f2f2','#e0e0e0'];
+  const VARIANTS     = ['variant01','variant02','variant03','variant04','variant05','variant06','variant07'];
+
+  // Elements
+  const avatarPreview = document.getElementById('avatarPreview');
+  const avatarUrlInput= document.getElementById('avatarUrlInput');
+  const elEyes      = document.getElementById('traitEyes');
+  const elMouth     = document.getElementById('traitMouth');
+  const elSkinColor = document.getElementById('traitSkinColor');
+  const elHairColor = document.getElementById('traitHairColor');
+  const elBgColor   = document.getElementById('traitBgColor');
+
+  // Helpers
+  function randItem(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function randSeed(){ return Math.random().toString(36).slice(2, 12); }
+
+  function buildAvatarUrl(seed, traits) {
+    const base = `https://api.dicebear.com/6.x/${STYLE}/svg`;
+    const p = new URLSearchParams();
+    if (seed) p.set('seed', seed);
+    if (traits.eyes)  p.set('eyes', traits.eyes);
+    if (traits.mouth) p.set('mouth', traits.mouth);
+    if (traits.skinColor) p.set('skinColor', traits.skinColor.replace('#',''));
+    if (traits.hairColor) p.set('hairColor', traits.hairColor.replace('#',''));
+    if (traits.bgColor) {
+      p.set('backgroundColor', traits.bgColor.replace('#',''));
+      p.set('backgroundType', 'solid');
+    }
+    return `${base}?${p.toString()}`;
+  }
+
+  function collectTraits() {
+    return {
+      eyes:      elEyes.value || '',
+      mouth:     elMouth.value || '',
+      skinColor: elSkinColor.value || '',
+      hairColor: elHairColor.value || '',
+      bgColor:   elBgColor.value || ''
+    };
+  }
+
+  // State
+  let currentSeed = null;
+
+  // Try to parse current avatar (if it's a DiceBear URL) and prefill traits
+  function tryPrefillFromCurrent() {
+    try {
+      const url = new URL(avatarPreview.src);
+      if (!/api\.dicebear\.com\/6\.x\/adventurer\/svg/.test(url.href)) return false;
+      const q = url.searchParams;
+      currentSeed = q.get('seed') || randSeed();
+      // tolerate missing params
+      elEyes.value  = q.get('eyes')  || '';
+      elMouth.value = q.get('mouth') || '';
+      const skin = q.get('skinColor'); if (skin) elSkinColor.value = `#${skin}`;
+      const hair = q.get('hairColor'); if (hair) elHairColor.value = `#${hair}`;
+      const bg   = q.get('backgroundColor'); if (bg) elBgColor.value = `#${bg}`;
+      return true;
+    } catch { return false; }
+  }
+
+  function refreshPreview() {
+    const url  = buildAvatarUrl(currentSeed, collectTraits());
+    avatarPreview.src = url;
+    avatarUrlInput.value = url;
+  }
+
+  function randomizeAll() {
+    currentSeed = randSeed();
+    elEyes.value  = randItem(['', ...VARIANTS]);
+    elMouth.value = randItem(['', ...VARIANTS]);
+    elSkinColor.value = randItem(SKIN_PALETTE);
+    elHairColor.value = randItem(HAIR_PALETTE);
+    elBgColor.value   = randItem(BG_PALETTE);
+    refreshPreview();
+  }
+
+  // Events
+  document.getElementById('randomizeAll').addEventListener('click', randomizeAll);
+  [elEyes, elMouth, elSkinColor, elHairColor, elBgColor]
+    .forEach(el => el.addEventListener('input', refreshPreview));
+
+  // Init
+  window.addEventListener('DOMContentLoaded', () => {
+    // If current avatar is DiceBear, prefill controls from it; otherwise randomize
+    if (!tryPrefillFromCurrent()) {
+      randomizeAll();
+    } else {
+      if (!currentSeed) currentSeed = randSeed();
+      refreshPreview();
+    }
+  });
+</script>
+{% endblock %}

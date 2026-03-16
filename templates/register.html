@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% block title %}Csatlakozz a nyomozók közé{% endblock %}
+{% block content %}
+
+<div class="onboarding-wrap">
+  <div class="onboarding-card card">
+    <div class="onboarding-card__inner">
+      <!-- Step indicator -->
+      <div class="onboarding-steps mb-4">
+        <span class="onboarding-step onboarding-step--active" data-step="1">1. Fiók</span>
+        <span class="onboarding-step" data-step="2">2. Avatar</span>
+      </div>
+
+      <form method="post" id="onboardingForm">
+        <!-- Step 1: Account -->
+        <div class="onboarding-panel" id="panelStep1">
+          <h2 class="onboarding-heading">Csatlakozz a nyomozók közé</h2>
+          <p class="onboarding-subtext text-muted">
+            Oldj meg városi rejtélyeket, gyűjts XP-t, szerezz coinokat, és fedezd fel a várost új szemmel.
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label">E-mail</label>
+            <input type="email" name="email" id="regEmail" class="form-control" required autocomplete="email">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Felhasználónév</label>
+            <input type="text" name="username" id="regUsername" class="form-control" required autocomplete="username">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Jelszó</label>
+            <input type="password" name="password" id="regPassword" class="form-control" minlength="6" required autocomplete="new-password">
+            <div class="password-strength mt-1 small" id="passwordStrength" aria-live="polite"></div>
+          </div>
+
+          <p class="small text-muted mb-3">
+            <a href="{{ url_for('auth.login') }}" class="text-primary">Már van fiókod?</a> Jelentkezz be.
+          </p>
+
+          <button type="button" class="btn btn-primary btn-lg w-100 onboarding-btn-next" id="btnToAvatar">
+            Tovább az avatarhoz
+          </button>
+        </div>
+
+        <!-- Step 2: Avatar -->
+        <div class="onboarding-panel d-none" id="panelStep2">
+          <h2 class="onboarding-heading">Készítsd el a nyomozóprofilodat</h2>
+          <p class="onboarding-subtext text-muted">
+            Ez lesz a megjelenésed a játékban. Később további kinézeteket és extrákat is feloldhatsz.
+          </p>
+
+          <div class="onboarding-avatar-section mb-4">
+            <div class="onboarding-avatar-preview-wrap">
+              <img id="avatarPreview" src="" alt="Avatar előnézet" class="onboarding-avatar-preview">
+            </div>
+            <div class="d-flex gap-2 justify-content-center mb-3">
+              <button type="button" id="randomizeAll" class="btn btn-outline-accent">Véletlen</button>
+            </div>
+
+            <div class="row g-2">
+              <div class="col-6 col-md-4">
+                <label class="form-label small text-muted">Szem</label>
+                <select id="traitEyes" class="form-select form-select-sm">
+                  <option value="">(auto)</option>
+                  <option value="variant01">Variáns 1</option>
+                  <option value="variant02">Variáns 2</option>
+                  <option value="variant03">Variáns 3</option>
+                  <option value="variant04">Variáns 4</option>
+                  <option value="variant05">Variáns 5</option>
+                  <option value="variant06">Variáns 6</option>
+                  <option value="variant07">Variáns 7</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label small text-muted">Száj</label>
+                <select id="traitMouth" class="form-select form-select-sm">
+                  <option value="">(auto)</option>
+                  <option value="variant01">Variáns 1</option>
+                  <option value="variant02">Variáns 2</option>
+                  <option value="variant03">Variáns 3</option>
+                  <option value="variant04">Variáns 4</option>
+                  <option value="variant05">Variáns 5</option>
+                  <option value="variant06">Variáns 6</option>
+                  <option value="variant07">Variáns 7</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label small text-muted">Bőrszín</label>
+                <input id="traitSkinColor" type="color" class="form-control form-control-color" value="#ffdbb4">
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label small text-muted">Hajszín</label>
+                <input id="traitHairColor" type="color" class="form-control form-control-color" value="#4a312c">
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label small text-muted">Háttér</label>
+                <input id="traitBgColor" type="color" class="form-control form-control-color" value="#b6e3f4">
+              </div>
+            </div>
+            <input type="hidden" id="avatarUrlInput" name="avatar_url">
+          </div>
+
+          <button type="button" class="btn btn-outline-secondary btn-sm mb-2" id="btnBackToAccount">← Vissza</button>
+          <button type="submit" class="btn btn-success btn-lg w-100" id="btnStartOnboarding">
+            Kezdjük a nyomozást
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const STYLE = 'adventurer';
+  const SKIN_PALETTE = ['#ffdbb4','#f1c27d','#e0ac69','#c68642','#8d5524'];
+  const HAIR_PALETTE = ['#000000','#4a312c','#8b5a2b','#a55728','#b5835a','#dba36a','#e6c79c','#ffffff'];
+  const BG_PALETTE = ['#b6e3f4','#c0aede','#d1d4f9','#ffd5dc','#ffdfbf','#d1f0c1','#f2f2f2','#e0e0e0'];
+  const VARIANTS = ['variant01','variant02','variant03','variant04','variant05','variant06','variant07'];
+
+  const form = document.getElementById('onboardingForm');
+  const panel1 = document.getElementById('panelStep1');
+  const panel2 = document.getElementById('panelStep2');
+  const btnToAvatar = document.getElementById('btnToAvatar');
+  const btnBack = document.getElementById('btnBackToAccount');
+  const steps = document.querySelectorAll('.onboarding-step');
+  const avatarPreview = document.getElementById('avatarPreview');
+  const avatarUrlInput = document.getElementById('avatarUrlInput');
+  const elEyes = document.getElementById('traitEyes');
+  const elMouth = document.getElementById('traitMouth');
+  const elSkinColor = document.getElementById('traitSkinColor');
+  const elHairColor = document.getElementById('traitHairColor');
+  const elBgColor = document.getElementById('traitBgColor');
+  const passwordEl = document.getElementById('regPassword');
+  const strengthEl = document.getElementById('passwordStrength');
+
+  let currentStep = 1;
+  let currentSeed = null;
+
+  function randItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function randSeed() { return Math.random().toString(36).slice(2, 12); }
+
+  function buildAvatarUrl(seed, traits) {
+    const base = 'https://api.dicebear.com/6.x/' + STYLE + '/svg';
+    const p = new URLSearchParams();
+    if (seed) p.set('seed', seed);
+    if (traits.eyes) p.set('eyes', traits.eyes);
+    if (traits.mouth) p.set('mouth', traits.mouth);
+    if (traits.skinColor) p.set('skinColor', traits.skinColor.replace('#',''));
+    if (traits.hairColor) p.set('hairColor', traits.hairColor.replace('#',''));
+    if (traits.bgColor) {
+      p.set('backgroundColor', traits.bgColor.replace('#',''));
+      p.set('backgroundType', 'solid');
+    }
+    return base + '?' + p.toString();
+  }
+
+  function collectTraits() {
+    return {
+      eyes: elEyes.value || '',
+      mouth: elMouth.value || '',
+      skinColor: elSkinColor.value || '',
+      hairColor: elHairColor.value || '',
+      bgColor: elBgColor.value || ''
+    };
+  }
+
+  function refreshPreview() {
+    var url = buildAvatarUrl(currentSeed, collectTraits());
+    avatarPreview.src = url;
+    avatarUrlInput.value = url;
+  }
+
+  function randomizeAll() {
+    currentSeed = randSeed();
+    elEyes.value = randItem(['', ...VARIANTS]);
+    elMouth.value = randItem(['', ...VARIANTS]);
+    elSkinColor.value = randItem(SKIN_PALETTE);
+    elHairColor.value = randItem(HAIR_PALETTE);
+    elBgColor.value = randItem(BG_PALETTE);
+    refreshPreview();
+  }
+
+  function goToStep(step) {
+    currentStep = step;
+    panel1.classList.toggle('d-none', step !== 1);
+    panel2.classList.toggle('d-none', step !== 2);
+    steps.forEach(function(s) {
+      s.classList.toggle('onboarding-step--active', parseInt(s.getAttribute('data-step'), 10) === step);
+    });
+  }
+
+  function passwordStrength(text) {
+    if (!text || text.length < 6) return { level: 0, label: 'gyenge' };
+    var score = 0;
+    if (text.length >= 8) score++;
+    if (/[a-z]/.test(text) && /[A-Z]/.test(text)) score++;
+    if (/\d/.test(text)) score++;
+    if (/[^a-zA-Z0-9]/.test(text)) score++;
+    if (text.length >= 12) score++;
+    if (score <= 1) return { level: 1, label: 'gyenge' };
+    if (score <= 3) return { level: 2, label: 'közepes' };
+    return { level: 3, label: 'erős' };
+  }
+
+  function updatePasswordStrength() {
+    var v = passwordEl.value;
+    var s = passwordStrength(v);
+    if (!v) {
+      strengthEl.textContent = '';
+      strengthEl.className = 'password-strength mt-1 small';
+      return;
+    }
+    strengthEl.textContent = 'Jelszó erősség: ' + s.label;
+    strengthEl.className = 'password-strength mt-1 small password-strength--' + ['', 'weak', 'medium', 'strong'][s.level];
+  }
+
+  btnToAvatar.addEventListener('click', function() {
+    var email = document.getElementById('regEmail').value.trim();
+    var username = document.getElementById('regUsername').value.trim();
+    var pwd = passwordEl.value;
+    if (!email || !username || !pwd) {
+      alert('Töltsd ki az e-mailt, a felhasználónevet és a jelszót.');
+      return;
+    }
+    if (pwd.length < 6) {
+      alert('A jelszónak legalább 6 karakter hosszúnak kell lennie.');
+      return;
+    }
+    refreshPreview();
+    goToStep(2);
+  });
+
+  if (btnBack) btnBack.addEventListener('click', function() { goToStep(1); });
+
+  document.getElementById('randomizeAll').addEventListener('click', randomizeAll);
+  [elEyes, elMouth, elSkinColor, elHairColor, elBgColor].forEach(function(el) {
+    if (el) el.addEventListener('input', refreshPreview);
+  });
+  if (passwordEl) passwordEl.addEventListener('input', updatePasswordStrength);
+
+  form.addEventListener('submit', function() {
+    if (!avatarUrlInput.value) refreshPreview();
+  });
+
+  window.addEventListener('DOMContentLoaded', function() {
+    randomizeAll();
+    updatePasswordStrength();
+  });
+})();
+</script>
+
+{% endblock %}

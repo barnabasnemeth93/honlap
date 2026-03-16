@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Admin – Nyomok{% endblock %}
+{% block content %}
+
+<div class="admin-header d-flex align-items-center justify-content-between mb-3">
+  <h2 class="m-0">Nyomok – {{ campaign.title }} <span class="text-muted fw-normal">(ID: {{ campaign.id }})</span></h2>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.index') }}">← Admin</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.campaigns') }}">Kampányok</a>
+  </div>
+</div>
+
+<!-- ADD FORM -->
+<div class="card admin-card mb-4">
+  <div class="card-body">
+    <h5 class="mb-3">Új nyom hozzáadása</h5>
+
+    <form method="post" class="row g-3">
+      <div class="col-sm-3 col-md-2">
+        <label class="form-label">Sorszám</label>
+        <input class="form-control" name="order_index" type="number" min="1" value="1" required>
+      </div>
+
+      <div class="col-sm-9 col-md-10">
+        <label class="form-label">Cím</label>
+        <input class="form-control" name="title" required>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Hely neve <span class="text-muted">(opcionális)</span></label>
+        <input name="location_name" class="form-control" placeholder="Pl. Hősök tere – északi oldal">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Szélesség (lat)</label>
+        <!-- step=any so long coords paste fine -->
+        <input name="latitude" class="form-control" type="number" step="any" placeholder="47.51329651456225">
+        <div class="form-text">Támogatott: 15 tizedesjegy (ajánlott NUMERIC(18,15)).</div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Hosszúság (lng)</label>
+        <input name="longitude" class="form-control" type="number" step="any" placeholder="19.083572139453324">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Megoldókód</label>
+        <input class="form-control" name="answer_code" placeholder="pl. 1896" required>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">XP jutalom <span class="text-muted">(opcionális)</span></label>
+        <input class="form-control" name="xp_reward" type="number" min="0" placeholder="Alap: 5">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Érme jutalom <span class="text-muted">(opcionális)</span></label>
+        <input class="form-control" name="coins_reward" type="number" min="0" placeholder="Alap: 3">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Szöveg</label>
+        <textarea class="form-control" name="text" rows="4" required></textarea>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Tipp <span class="text-muted">(opcionális)</span></label>
+        <input class="form-control" name="hint">
+      </div>
+
+      <div class="col-12">
+        <button class="btn btn-primary">Hozzáad</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- LIST -->
+<div class="card admin-card">
+  <div class="card-body p-0">
+    <div class="table-responsive admin-table-wrap">
+      <table class="table table-borderless table-hover align-middle m-0">
+        <thead class="sticky-top">
+          <tr>
+            <th class="w-1">#</th>
+            <th>Cím</th>
+            <th class="w-25">Megoldó</th>
+            <th class="w-25">Hely</th>
+            <th class="text-center">XP / Érme</th>
+            <th class="text-end w-1">Művelet</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cl in clues %}
+          <tr>
+            <td class="text-muted">{{ cl.order_index }}</td>
+            <td class="text-break">{{ cl.title }}</td>
+            <td>
+              <span class="code-pill">{{ cl.answer_code }}</span>
+            </td>
+            <td class="small">
+              {% if cl.location_name %}
+                <span class="badge bg-outline badge-loc me-1"><i class="fa-solid fa-location-dot me-1"></i>{{ cl.location_name }}</span>
+              {% endif %}
+              {% if cl.latitude and cl.longitude %}
+                <span class="text-muted d-block mt-1">
+                  {{ "%.6f"|format(cl.latitude|float) }}, {{ "%.6f"|format(cl.longitude|float) }}
+                </span>
+              {% endif %}
+            </td>
+            <td class="small text-center text-muted">
+              {% if cl.xp_reward is not none or cl.coins_reward is not none %}
+                {{ cl.xp_reward if cl.xp_reward is not none else '–' }} XP / {{ cl.coins_reward if cl.coins_reward is not none else '–' }} érme
+              {% else %}
+                <span class="opacity-75">alap</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <a class="btn btn-outline-secondary" href="{{ url_for('admin.edit_clue', clue_id=cl.id) }}">Szerkesztés</a>
+                <a class="btn btn-outline-danger"
+                   href="{{ url_for('admin.delete_clue', clue_id=cl.id) }}"
+                   onclick="return confirm('Biztosan törlöd ezt a nyomot?');">Törlés</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

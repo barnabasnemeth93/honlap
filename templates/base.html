@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Városnyomozó{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Egyéni stílusok -->
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" />
+
+    <!-- Font Awesome 6 (icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  </head>
+
+  <body>
+    <!-- NAVBAR: desktop = egy sor (logo, linkek, user+kijelentkezés); mobil = hamburger, minden a menüben -->
+    <nav class="navbar navbar-expand-lg detective-navbar sticky-top">
+      <div class="container-fluid px-3 px-lg-4">
+        <a class="navbar-brand detective-brand me-3" href="{{ url_for('index') }}">
+          <img
+            src="https://res.cloudinary.com/dxv1xxmp7/image/upload/v1773495033/ChatGPT_Image_Mar_14__2026__02_25_52_PM-removebg-preview_mik16d.png"
+            alt="City Detective logo"
+            class="detective-brand__logo"
+          >
+          <div class="detective-brand__text">
+            <span class="detective-brand__title">Városnyomozó</span>
+            <span class="detective-brand__subtitle">City Detective</span>
+          </div>
+        </a>
+
+        <button class="navbar-toggler detective-navbar-toggler" type="button"
+                data-bs-toggle="collapse" data-bs-target="#detectiveNavCollapse"
+                aria-controls="detectiveNavCollapse" aria-expanded="false" aria-label="Menü">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse detective-navbar-collapse" id="detectiveNavCollapse">
+          <ul class="navbar-nav detective-nav-links mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
+              href="{{ url_for('dashboard.dashboard') }}">
+             <i class="fa-solid fa-compass me-2"></i>Játékok
+           </a>
+            </li>
+            {% if current_user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'profile.profile' %}active{% endif %}"
+              href="{{ url_for('profile.profile') }}">
+             <i class="fa-regular fa-user me-2"></i>Profil
+           </a>
+            </li>
+            {% endif %}
+            {% if current_user.is_authenticated and current_user.role == 'admin' %}
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}"
+              href="{{ url_for('admin.index') }}">
+             <i class="fa-solid fa-shield-halved me-2"></i>Admin
+           </a>
+            </li>
+            {% endif %}
+          </ul>
+          <ul class="navbar-nav detective-nav-actions align-items-center ms-lg-auto">
+            {% if current_user.is_authenticated %}
+            <li class="nav-item">
+              <div class="detective-user-chip">
+                {% if current_user.avatar_url %}
+                  <img src="{{ current_user.avatar_url }}" alt="Avatar" class="detective-user-chip__avatar">
+                {% else %}
+                  <div class="detective-user-chip__avatar detective-user-chip__avatar--placeholder">
+                    {{ current_user.username[:1]|upper }}
+                  </div>
+                {% endif %}
+                <div class="detective-user-chip__content">
+                  <span class="detective-user-chip__label">Szia</span>
+                  <span class="detective-user-chip__name">{{ current_user.username }}</span>
+                  {% if xp_widget %}
+                  <div class="detective-xp-widget mt-1">
+                    <div class="detective-xp-widget__row">
+                      <span class="detective-xp-widget__rank">{{ xp_widget.rank }}</span>
+                      {% if xp_widget.next_rank %}
+                      <span class="detective-xp-widget__next">Következő rang: {{ xp_widget.next_rank.name }}</span>
+                      {% endif %}
+                    </div>
+                    {% if xp_widget.next_rank %}
+                    {% set nr = xp_widget.next_rank %}
+                    {% set pct = (nr.xp_current / nr.xp_in_tier * 100) if nr.xp_in_tier else 0 %}
+                    <div class="progress detective-xp-widget__bar" role="progressbar"
+                         aria-valuenow="{{ nr.xp_current }}" aria-valuemin="0" aria-valuemax="{{ nr.xp_in_tier }}">
+                      <div class="progress-bar" style="width: {{ pct|int }}%;"></div>
+                    </div>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </li>
+            <li class="nav-item ms-lg-2">
+              <a class="btn btn-outline-warning btn-sm detective-btn-nav" href="{{ url_for('auth.logout') }}">
+                Kijelentkezés
+              </a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="btn btn-outline-light btn-sm detective-btn-nav" href="{{ url_for('auth.login') }}">
+                Belépés
+              </a>
+            </li>
+            <li class="nav-item ms-lg-2">
+              <a class="btn btn-warning btn-sm detective-btn-nav" href="{{ url_for('auth.register') }}">
+                Regisztráció
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- TOAST Flash üzenetek -->
+<!-- TOAST Flash üzenetek -->
+<div id="flash-toast-anchor" aria-live="polite" aria-atomic="true">
+  <div id="flash-toast-container"></div>
+</div>
+
+
+    <!-- TARTALOM -->
+    <main class="container my-4">
+      {% if achievement_progress and achievement_progress.type != 'clues_solved' %}
+      <div class="alert alert-info d-flex align-items-center mb-3" role="alert">
+        <div class="flex-grow-1">
+          <strong>Következő achievement:</strong> {{ achievement_progress.name }}
+          <span class="text-muted">({{ achievement_progress.current }} / {{ achievement_progress.target }})</span>
+          <div class="progress mt-2" style="height: 8px;">
+            <div class="progress-bar" role="progressbar"
+                 style="width: {% if achievement_progress.target %}{{ [ (achievement_progress.current / achievement_progress.target * 100) | int, 100 ] | min }}%{% else %}0%{% endif %};"
+                 aria-valuenow="{{ achievement_progress.current }}" aria-valuemin="0" aria-valuemax="{{ achievement_progress.target }}"></div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="detective-footer mt-5">
+      <div class="container">
+        <div class="detective-footer__inner">
+          <div class="detective-footer__brand">
+            <img
+              src="https://res.cloudinary.com/dxv1xxmp7/image/upload/v1773495033/ChatGPT_Image_Mar_14__2026__02_25_52_PM-removebg-preview_mik16d.png"
+              alt="City Detective logo"
+              class="detective-footer__logo"
+            >
+            <div>
+              <div class="detective-footer__title">Városnyomozó</div>
+              <div class="detective-footer__subtitle">Fedezd fel a várost nyomról nyomra.</div>
+            </div>
+          </div>
+    
+          <div class="detective-footer__links">
+            <a href="{{ url_for('index') }}">Főoldal</a>
+            <a href="{{ url_for('dashboard.dashboard') }}">Játékok</a>
+            {% if current_user.is_authenticated %}
+              <a href="{{ url_for('profile.profile') }}">Profil</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Achievement unlocked modal (shown once when newly_unlocked_achievements is set) -->
+    {% if newly_unlocked_achievements %}
+    <div class="modal fade" id="achievementUnlockedModal" tabindex="-1" aria-labelledby="achievementUnlockedLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-success shadow-lg">
+          <div class="modal-header bg-success bg-opacity-10 border-success">
+            <h5 class="modal-title text-success" id="achievementUnlockedLabel"><i class="fa-solid fa-trophy me-2"></i>Achievement megszerezve!</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+          </div>
+          <div class="modal-body text-center pb-4">
+            {% for ach in newly_unlocked_achievements %}
+            <div class="achievement-item mb-4 {% if not loop.first %}mt-4 pt-4 border-top border-success border-opacity-25{% endif %}" data-ach-index="{{ loop.index0 }}">
+              {% if ach.criteria_type == 'clues_solved' and ach.from_value is defined and ach.to_value is defined %}
+              <div class="clue-achievement-anim mb-3" data-from="{{ ach.from_value }}" data-to="{{ ach.to_value }}">
+                <div class="achievement-count-display mb-2" style="font-size: 2rem; font-weight: 700; color: var(--bs-success); min-height: 2.5rem;">
+                  <span class="achievement-count-num">{{ ach.from_value }}</span><span class="achievement-count-suffix"> / {{ ach.to_value }} nyom</span>
+                </div>
+                <div class="progress achievement-bar-anim" style="height: 12px; border-radius: 6px;">
+                  <div class="progress-bar bg-success" role="progressbar" style="width: 0%; transition: width 0.6s ease-out; border-radius: 6px;"></div>
+                </div>
+              </div>
+              {% endif %}
+              {% if ach.badge_image_url %}
+              <img src="{{ ach.badge_image_url }}" alt="{{ ach.name }}" class="rounded mb-2" style="width: 80px; height: 80px; object-fit: cover;">
+              {% else %}
+              <div class="rounded-circle bg-warning bg-opacity-25 d-inline-flex align-items-center justify-content-center mb-2" style="width: 80px; height: 80px; font-size: 2.5rem;"><i class="fa-solid fa-trophy text-warning"></i></div>
+              {% endif %}
+              <h6 class="mb-1 fw-bold">{{ ach.name }}</h6>
+              {% if ach.description %}
+              <p class="text-muted small mb-0">{{ ach.description }}</p>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-success" data-bs-dismiss="modal">Rendben</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Újrafelhasználható megerősítő ablak (DetectiveConfirm.show()) -->
+    <div class="modal fade detective-confirm" id="detectiveConfirmModal" tabindex="-1" aria-labelledby="detectiveConfirmTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content detective-confirm__content">
+          <div class="detective-confirm__header">
+            <div class="detective-confirm__icon-wrap" aria-hidden="true"></div>
+            <h5 class="modal-title detective-confirm__title" id="detectiveConfirmTitle"></h5>
+            <button type="button" class="btn-close detective-confirm__close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+          </div>
+          <div class="modal-body detective-confirm__body"></div>
+          <div class="modal-footer detective-confirm__footer">
+            <button type="button" class="btn detective-confirm__btn detective-confirm__cancel" data-bs-dismiss="modal">Mégse</button>
+            <button type="button" class="btn detective-confirm__btn detective-confirm__confirm">Rendben</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if newly_unlocked_achievements %}
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var m = document.getElementById("achievementUnlockedModal");
+        if (!m) return;
+        var bsModal = new bootstrap.Modal(m, { backdrop: true, keyboard: true });
+        bsModal.show();
+
+        var animBlocks = m.querySelectorAll(".clue-achievement-anim");
+        animBlocks.forEach(function (block) {
+          var from = parseInt(block.getAttribute("data-from"), 10);
+          var to = parseInt(block.getAttribute("data-to"), 10);
+          var numEl = block.querySelector(".achievement-count-num");
+          var barEl = block.querySelector(".progress-bar");
+          if (!numEl || !barEl) return;
+
+          var duration = 800;
+          var start = performance.now();
+          function step(now) {
+            var t = (now - start) / duration;
+            if (t > 1) t = 1;
+            var eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            var current = Math.round(from + (to - from) * eased);
+            numEl.textContent = current;
+            var pct = to ? (current / to * 100) : 0;
+            barEl.style.width = Math.min(pct, 100) + "%";
+            if (t < 1) requestAnimationFrame(step);
+            else {
+              setTimeout(function () {
+                block.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+                block.style.opacity = "0";
+                block.style.transform = "scale(0.98)";
+                setTimeout(function () { block.style.display = "none"; }, 400);
+              }, 400);
+            }
+          }
+          requestAnimationFrame(step);
+        });
+      });
+    </script>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Saját JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    
+    <!-- Flash üzenetek toastként -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <script>
+          document.addEventListener("DOMContentLoaded", function () {
+  const container = document.getElementById("flash-toast-container");
+
+  const icons = {
+    success: '<i class="fa-solid fa-check"></i>',
+    danger: '<i class="fa-solid fa-xmark"></i>',
+    warning: '<i class="fa-solid fa-triangle-exclamation"></i>',
+    info: '<i class="fa-solid fa-circle-info"></i>'
+  };
+
+  {% for category, message in messages %}
+  const toast = document.createElement("div");
+
+  toast.className = "detective-toast detective-toast-" + "{{ category }}";
+
+  toast.innerHTML = `
+    <div class="detective-toast-icon">
+      ${icons["{{ category }}"] || '<i class="fa-solid fa-circle-info"></i>'}
+    </div>
+
+    <div class="detective-toast-content">
+      <div class="detective-toast-message">
+        {{ message }}
+      </div>
+    </div>
+
+    <button class="detective-toast-close">&times;</button>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add("show");
+  }, 50);
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 4500);
+
+  toast.querySelector(".detective-toast-close").onclick = () => {
+    toast.remove();
+  };
+
+  {% endfor %}
+});
+
+        </script>
+      {% endif %}
+    {% endwith %}
+    <script src="https://cdn.ckeditor.com/4.25.1/standard/ckeditor.js"></script>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

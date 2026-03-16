@@ -1,0 +1,472 @@
+{% extends 'base.html' %}
+{% block title %}Admin – Játékosok{% endblock %}
+
+{% block content %}
+<div class="players-admin-page">
+  <div class="players-admin-header">
+    <div>
+      <h2 class="mb-1">Játékosok</h2>
+      <p class="text-muted small mb-0">
+        Regisztrált játékosok és kampány előrehaladásuk (jelszó nem látható).
+      </p>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary btn-sm">← Admin</a>
+      <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary btn-sm">Vissza</a>
+    </div>
+  </div>
+
+  <div class="players-toolbar admin-card mb-4">
+    <div class="players-toolbar__grid">
+      <div>
+        <label for="playerSearch" class="form-label mb-1">Keresés</label>
+        <input
+          type="text"
+          id="playerSearch"
+          class="form-control"
+          placeholder="Felhasználónév vagy e-mail keresése..."
+        >
+      </div>
+
+      <div>
+        <label for="playerSort" class="form-label mb-1">Rendezés</label>
+        <select id="playerSort" class="form-select">
+          <option value="created_desc">Legújabb regisztráció</option>
+          <option value="created_asc">Legrégebbi regisztráció</option>
+          <option value="username_asc">Felhasználónév (A–Z)</option>
+          <option value="username_desc">Felhasználónév (Z–A)</option>
+          <option value="clues_desc">Nyomok szerint (legtöbb)</option>
+          <option value="clues_asc">Nyomok szerint (legkevesebb)</option>
+          <option value="completed_desc">Befejezett kampányok (legtöbb)</option>
+          <option value="completed_asc">Befejezett kampányok (legkevesebb)</option>
+        </select>
+      </div>
+
+      <div class="players-toolbar__actions">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="expandAllPlayers">
+          Összes lenyitása
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="collapseAllPlayers">
+          Összes becsukása
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="players-summary small text-muted mb-3" id="playersSummary">
+    Összes játékos: {{ players|length }}
+  </div>
+
+  <div id="playersList" class="players-list">
+    {% for p in players %}
+    <section
+      class="player-card admin-card"
+      data-user-id="{{ p.id }}"
+      data-username="{{ p.username|lower }}"
+      data-email="{{ p.email|lower }}"
+      data-role="{{ p.role|lower }}"
+      data-created-ts="{{ p.created_at.timestamp()|int if p.created_at else 0 }}"
+      data-clues="{{ p.total_clues_solved or 0 }}"
+      data-completed="{{ p.total_campaigns_completed or 0 }}"
+    >
+      <div class="player-card__header">
+        <div
+          class="player-card__toggle"
+          role="button"
+          tabindex="0"
+          data-bs-toggle="collapse"
+          data-bs-target="#playerCollapse{{ loop.index }}"
+          aria-expanded="false"
+          aria-controls="playerCollapse{{ loop.index }}"
+        >
+          <div class="player-card__main">
+            <div class="player-avatar-wrap">
+              {% if p.avatar_url %}
+              <img src="{{ p.avatar_url }}" alt="" class="player-avatar">
+              {% else %}
+              <div class="player-avatar player-avatar--placeholder">{{ (p.username[:1] if p.username else '?')|upper }}</div>
+              {% endif %}
+            </div>
+            <div class="player-identity">
+              <span class="player-name">{{ p.username }}</span>
+              {% if p.role == 'admin' %}<span class="badge bg-danger">admin</span>{% else %}<span class="badge bg-secondary">user</span>{% endif %}
+              <span class="badge bg-success player-new-badge" style="display:none;">Új</span>
+              <span class="player-email">{{ p.email }}</span>
+            </div>
+          </div>
+          <div class="player-stats">
+            <span class="player-stat"><span class="player-stat__label">Reg.</span> <span class="player-stat__value player-created-at">{{ p.created_at.strftime('%Y.%m.%d. %H:%M') if p.created_at else '—' }}</span></span>
+            <span class="player-stat"><span class="player-stat__label">XP</span> <span class="player-stat__value">{{ p.xp }}</span></span>
+            <span class="player-stat"><span class="player-stat__label">Érme</span> <span class="player-stat__value">{{ p.coins }}</span></span>
+            <span class="player-stat"><span class="player-stat__label">Nyom</span> <span class="player-stat__value">{{ p.total_clues_solved }}</span></span>
+            <span class="player-stat"><span class="player-stat__label">Bef.</span> <span class="player-stat__value">{{ p.total_campaigns_completed }}</span></span>
+          </div>
+          <div class="player-chevron">
+            <span class="player-chevron__icon">⌄</span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary edit-user-btn" title="Szerkesztés / törlés"
+          data-user-id="{{ p.id }}"
+          data-username="{{ p.username|e }}"
+          data-email="{{ p.email|e }}"
+          data-role="{{ p.role }}"
+          data-bs-toggle="modal"
+          data-bs-target="#editUserModal">
+          Szerkesztés
+        </button>
+      </div>
+
+      <div class="collapse" id="playerCollapse{{ loop.index }}">
+        <div class="player-card__body">
+          <div class="player-detail-grid">
+            <div class="player-detail-box">
+              <div class="player-detail-box__label">Felhasználónév</div>
+              <div class="player-detail-box__value">{{ p.username }}</div>
+            </div>
+
+            <div class="player-detail-box">
+              <div class="player-detail-box__label">E-mail</div>
+              <div class="player-detail-box__value">{{ p.email }}</div>
+            </div>
+
+            <div class="player-detail-box">
+              <div class="player-detail-box__label">Szerepkör</div>
+              <div class="player-detail-box__value">
+                {% if p.role == 'admin' %}
+                <span class="badge bg-danger">admin</span>
+                {% else %}
+                <span class="badge bg-secondary">user</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="player-detail-box">
+              <div class="player-detail-box__label">Regisztráció</div>
+              <div class="player-detail-box__value">
+                {{ p.created_at.strftime('%Y.%m.%d. %H:%M') if p.created_at else '—' }}
+              </div>
+            </div>
+
+            <div class="player-detail-box">
+              <div class="player-detail-box__label">XP</div>
+              <div class="player-detail-box__value">{{ p.xp }}</div>
+            </div>
+
+            <div class="player-detail-box">
+              <div class="player-detail-box__label">Érmék</div>
+              <div class="player-detail-box__value">{{ p.coins }}</div>
+            </div>
+
+            <div class="player-detail-box">
+              <div class="player-detail-box__label">Megoldott nyomok</div>
+              <div class="player-detail-box__value">{{ p.total_clues_solved }}</div>
+            </div>
+
+            <div class="player-detail-box">
+              <div class="player-detail-box__label">Befejezett kampányok</div>
+              <div class="player-detail-box__value">{{ p.total_campaigns_completed }}</div>
+            </div>
+          </div>
+
+          <div class="player-progress-section mt-4">
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-3">
+              <h6 class="mb-0">Kampány előrehaladás</h6>
+              <span class="small text-muted">
+                {{ p.progress|length if p.progress else 0 }} kampány
+              </span>
+            </div>
+
+            {% if p.progress %}
+            <div class="progress-list">
+              {% for prog in p.progress %}
+              <div class="progress-item">
+                <div class="progress-item__top">
+                  <div class="progress-item__title-wrap">
+                    <div class="progress-item__title">{{ prog.campaign_title }}</div>
+
+                    <div class="progress-item__meta">
+                      {% if prog.campaign_slug %}
+                      <a href="{{ url_for('game.start_campaign', slug=prog.campaign_slug) }}" target="_blank">
+                        Megnyitás →
+                      </a>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="progress-item__badges">
+                    {% if prog.is_finished %}
+                    <span class="badge bg-success">Befejezve</span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark">Aktuális: {{ prog.current_order }}. nyom</span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="progress-item__stats">
+                  <span>{{ prog.percent }}% ({{ prog.solved_count }}/{{ prog.total_clues }} nyom)</span>
+                  <span>
+                    Kezdés:
+                    {{ prog.started_at.strftime('%Y.%m.%d. %H:%M') if prog.started_at else '—' }}
+                    {% if prog.finished_at %}
+                      · Befejezés: {{ prog.finished_at.strftime('%Y.%m.%d. %H:%M') }}
+                    {% endif %}
+                  </span>
+                </div>
+
+                <div class="progress campaign-progress-bar">
+                  <div class="progress-bar {% if prog.is_finished %}bg-success{% endif %}"
+                       role="progressbar"
+                       style="width: {{ prog.percent }}%;"
+                       aria-valuenow="{{ prog.percent }}"
+                       aria-valuemin="0"
+                       aria-valuemax="100">
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="player-empty-progress">
+              Ennek a játékosnak még nincs kampány előrehaladása.
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+    {% else %}
+    <div class="player-empty-state admin-card">
+      Még nincs regisztrált játékos.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const list = document.getElementById('playersList');
+    const searchInput = document.getElementById('playerSearch');
+    const sortSelect = document.getElementById('playerSort');
+    const summary = document.getElementById('playersSummary');
+    const expandAllBtn = document.getElementById('expandAllPlayers');
+    const collapseAllBtn = document.getElementById('collapseAllPlayers');
+  
+    if (!list) return;
+  
+    function getCards() {
+      return Array.from(list.querySelectorAll('.player-card'));
+    }
+  
+    function updateNewBadges() {
+      const now = Date.now();
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+  
+      getCards().forEach(card => {
+        const createdTs = parseInt(card.dataset.createdTs || '0', 10) * 1000;
+        const badge = card.querySelector('.player-new-badge');
+        if (!badge || !createdTs) return;
+  
+        if ((now - createdTs) <= sevenDaysMs) {
+          badge.style.display = 'inline-flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      });
+    }
+  
+    function applySearch() {
+      const q = (searchInput.value || '').trim().toLowerCase();
+      let visibleCount = 0;
+  
+      getCards().forEach(card => {
+        const username = card.dataset.username || '';
+        const email = card.dataset.email || '';
+        const match = !q || username.includes(q) || email.includes(q);
+  
+        card.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
+      });
+  
+      summary.textContent = `Találatok: ${visibleCount} / ${getCards().length}`;
+    }
+  
+    function compareCards(a, b, sortValue) {
+      const usernameA = (a.dataset.username || '').toLowerCase();
+      const usernameB = (b.dataset.username || '').toLowerCase();
+      const createdA = parseInt(a.dataset.createdTs || '0', 10);
+      const createdB = parseInt(b.dataset.createdTs || '0', 10);
+      const cluesA = parseInt(a.dataset.clues || '0', 10);
+      const cluesB = parseInt(b.dataset.clues || '0', 10);
+      const completedA = parseInt(a.dataset.completed || '0', 10);
+      const completedB = parseInt(b.dataset.completed || '0', 10);
+  
+      switch (sortValue) {
+        case 'created_asc':
+          return createdA - createdB;
+        case 'created_desc':
+          return createdB - createdA;
+        case 'username_asc':
+          return usernameA.localeCompare(usernameB, 'hu');
+        case 'username_desc':
+          return usernameB.localeCompare(usernameA, 'hu');
+        case 'clues_asc':
+          return cluesA - cluesB;
+        case 'clues_desc':
+          return cluesB - cluesA;
+        case 'completed_asc':
+          return completedA - completedB;
+        case 'completed_desc':
+          return completedB - completedA;
+        default:
+          return 0;
+      }
+    }
+  
+    function applySort() {
+      const sortValue = sortSelect.value;
+      const cards = getCards();
+  
+      cards.sort((a, b) => compareCards(a, b, sortValue));
+      cards.forEach(card => list.appendChild(card));
+    }
+  
+    function expandAll() {
+      list.querySelectorAll('.collapse').forEach(el => {
+        bootstrap.Collapse.getOrCreateInstance(el, { toggle: false }).show();
+      });
+    }
+  
+    function collapseAll() {
+      list.querySelectorAll('.collapse').forEach(el => {
+        bootstrap.Collapse.getOrCreateInstance(el, { toggle: false }).hide();
+      });
+    }
+  
+    searchInput.addEventListener('input', applySearch);
+    sortSelect.addEventListener('change', function () {
+      applySort();
+      applySearch();
+    });
+  
+    if (expandAllBtn) expandAllBtn.addEventListener('click', expandAll);
+    if (collapseAllBtn) collapseAllBtn.addEventListener('click', collapseAll);
+  
+    list.addEventListener('shown.bs.collapse', function (e) {
+      const card = e.target.closest('.player-card');
+      if (card) card.classList.add('is-open');
+    });
+  
+    list.addEventListener('hidden.bs.collapse', function (e) {
+      const card = e.target.closest('.player-card');
+      if (card) card.classList.remove('is-open');
+    });
+  
+    updateNewBadges();
+    applySort();
+    applySearch();
+  })();
+  
+  function confirmDelete(form) {
+    var pwd = form.querySelector('[name=delete_confirm_password]')?.value || '';
+    if (!pwd) {
+      alert('A törléshez add meg a jelszót.');
+      return false;
+    }
+    return confirm('Biztosan törlöd ezt a felhasználót? A haladása és achievementei is törlődnek.');
+  }
+  
+  document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('editUserModal');
+    const form = document.getElementById('editUserForm');
+    const deleteForm = document.getElementById('deleteUserForm');
+    const deleteWrap = modal?.querySelector('.edit-user-delete-wrap');
+  
+    document.querySelectorAll('.edit-user-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const uid = this.dataset.userId;
+        const username = this.dataset.username || '';
+        const email = this.dataset.email || '';
+        const role = (this.dataset.role || 'user').toLowerCase();
+  
+        if (form) {
+          form.action = '/admin/users/' + uid + '/edit';
+          form.querySelector('[name="username"]').value = username;
+          form.querySelector('[name="email"]').value = email;
+          form.querySelector('[name="role"]').value = role;
+        }
+  
+        if (deleteForm) {
+          deleteForm.action = '/admin/users/' + uid + '/delete';
+        }
+  
+        if (deleteWrap) {
+          deleteWrap.style.display = role === 'admin' ? 'none' : '';
+        }
+  
+        const pwdInput = modal?.querySelector('[name="delete_confirm_password"]');
+        if (pwdInput) pwdInput.value = '';
+        const xpAdj = modal?.querySelector('[name="xp_adjustment"]');
+        const coinAdj = modal?.querySelector('[name="coin_adjustment"]');
+        if (xpAdj) xpAdj.value = '';
+        if (coinAdj) coinAdj.value = '';
+      });
+    });
+  });
+  </script>
+
+<!-- Edit / Delete user modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editUserModalLabel">Felhasználó szerkesztése</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+      </div>
+      <form id="editUserForm" method="post" action="">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Felhasználónév <span class="text-danger">*</span></label>
+            <input type="text" name="username" class="form-control" required maxlength="80">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">E-mail <span class="text-danger">*</span></label>
+            <input type="email" name="email" class="form-control" required maxlength="255">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Szerepkör</label>
+            <select name="role" class="form-select">
+              <option value="user">user</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+          <hr class="my-3">
+          <div class="mb-2 small text-muted">XP / érme módosítás (opcionális, megjelenik a játékos naplójában)</div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small">XP módosítás</label>
+              <input type="number" name="xp_adjustment" class="form-control form-control-sm" placeholder="pl. 10 vagy -5" step="1">
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Érme módosítás</label>
+              <input type="number" name="coin_adjustment" class="form-control form-control-sm" placeholder="pl. 20 vagy -10" step="1">
+            </div>
+          </div>
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button type="submit" form="editUserForm" class="btn btn-primary">Mentés</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Mégse</button>
+        <div class="edit-user-delete-wrap ms-auto d-flex align-items-center gap-2">
+          <form id="deleteUserForm" method="post" action="" class="d-flex align-items-center gap-2" onsubmit="return confirmDelete(this);">
+            <input type="password" name="delete_confirm_password" class="form-control form-control-sm edit-user-delete-password" placeholder="Jelszó a törléshez" autocomplete="off">
+            <button type="submit" class="btn btn-danger">Törlés</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

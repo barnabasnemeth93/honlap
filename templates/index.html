@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Kezdőlap – Városnyomozó{% endblock %}
+{% block content %}
+
+<!-- HERO -->
+<section class="hero-detective position-relative overflow-hidden rounded-3 mb-4">
+  <canvas id="heroParticles" class="position-absolute top-0 start-0 w-100 h-100"></canvas>
+  <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100"></div>
+
+  <div class="hero-content container position-relative py-5">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <h1 class="display-5 fw-bold mb-3 text-gradient">Városnyomozó</h1>
+        <p class="lead mb-3 opacity-75">Fedezd fel Budapest rejtett történeteit és titkos jeleit.</p>
+
+        <!-- Gépelős effekt -->
+        <p class="typed lead mb-4">
+          <span id="typedText"
+            data-phrases="Kövess nyomokat a Városligetben...|Fejtsd meg a feliratokat és évszámokat...|Oldd meg az ügyet, ügynök!">
+          </span>
+          <span class="typed-caret">▌</span>
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-success btn-lg" href="{{ url_for('auth.register') }}">Kezdjük!</a>
+          <a class="btn btn-outline-primary btn-lg" href="{{ url_for('dashboard.dashboard') }}">Játéktér</a>
+        </div>
+
+        <!-- Meta sor (ha van már kampányod, nyugodtan átírhatod dinamikusra) -->
+        <div class="mt-3 small text-muted">
+          <i class="fa-solid fa-route me-1"></i>~3–4 km · <i class="fa-solid fa-clock me-1"></i>~60–90 perc · <i class="fa-solid fa-user-secret me-1"></i>kezdő & haladó
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- Parallax dísz -->
+  <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1400&auto=format&fit=crop"
+       alt="noir texture" class="hero-texture" />
+</section>
+
+<!-- FEATURE KÁRTYÁK -->
+<section class="container mb-5">
+  <div class="row row-cols-1 row-cols-md-3 g-3">
+    <div class="col">
+      <div class="feature-card card h-100">
+        <div class="card-body">
+          <div class="feature-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+          <h5 class="card-title mb-2">Városi nyomozás</h5>
+          <p class="text-muted">Nyomok, feliratok, évszámok – a város lesz a játszótér.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="feature-card card h-100">
+        <div class="card-body">
+          <div class="feature-icon"><i class="fa-solid fa-clock"></i></div>
+          <h5 class="card-title mb-2">Rugalmasság</h5>
+          <p class="text-muted">Bármikor játszható. 60–90 perces séták, akár barátokkal.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="feature-card card h-100">
+        <div class="card-body">
+          <div class="feature-icon"><i class="fa-solid fa-trophy"></i></div>
+          <h5 class="card-title mb-2">Kihívások</h5>
+          <p class="text-muted">Haladj a sztoriban, oldd meg a rejtvényeket, lépj a következő szintre.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOGYAN MŰKÖDIK -->
+<section class="container mb-5">
+  <div class="row g-4 align-items-center">
+    <div class="col-lg-6">
+      <h3 class="mb-3">Hogyan működik?</h3>
+      <ol class="howto list-unstyled m-0">
+        <li class="howto-step">
+          <span class="howto-no">1</span>
+          <div><strong>Regisztrálj</strong> és jelentkezz be.</div>
+        </li>
+        <li class="howto-step">
+          <span class="howto-no">2</span>
+          <div><strong>Válassz kampányt</strong> (pl. Városliget) és indítsd el.</div>
+        </li>
+        <li class="howto-step">
+          <span class="howto-no">3</span>
+          <div><strong>Kövess nyomokat</strong>, írd be a kódokat (évszám, felirat) és juss tovább.</div>
+        </li>
+        <li class="howto-step">
+          <span class="howto-no">4</span>
+          <div><strong>Oldd meg az ügyet</strong> és zsebeld be a dicsőséget!</div>
+        </li>
+      </ol>
+    </div>
+    <div class="col-lg-6">
+      <div class="video-stub card border-0 shadow-sm p-2">
+        <div class="ratio ratio-16x9 rounded" style="background:#0f0f0f;">
+          <!-- ide tehetsz később bemutató videót, most animált overlay -->
+          <div class="d-flex flex-column align-items-center justify-content-center text-center p-3">
+            <div class="pulse-dot mb-3"></div>
+            <div class="text-muted">Demó videó helye (hamarosan)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA SÁV -->
+<section class="container">
+  <div class="cta card border-0 p-4 d-flex flex-lg-row flex-column align-items-center justify-content-between gap-3">
+    <div>
+      <h4 class="mb-1">Készen állsz a nyomozásra?</h4>
+      <div class="text-muted">Csatlakozz, és kezdj bele a legelső ügyedbe ma!</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-success btn-lg" href="{{ url_for('auth.register') }}">Regisztráció</a>
+      <a class="btn btn-outline-primary btn-lg" href="{{ url_for('dashboard.dashboard') }}">Játékok</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

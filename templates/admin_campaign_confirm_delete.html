@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Kampány törlése – {{ campaign.title }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2>Kampány törlése</h2>
+  <a href="{{ url_for('admin.campaigns') }}" class="btn btn-outline-secondary">Vissza</a>
+</div>
+
+<div class="card border-danger">
+  <div class="card-body">
+    <h5 class="card-title text-danger">Biztosan törlöd ezt a kampányt?</h5>
+    <p class="card-text"><strong>{{ campaign.title }}</strong> (slug: <code>{{ campaign.slug }}</code>)</p>
+    <p class="text-muted small">A kampányhoz tartozó összes nyom (clue) is törlődik. A művelet nem vonható vissza.</p>
+    <form method="post" class="d-inline">
+      <button type="submit" class="btn btn-danger">Igen, törlöm</button>
+    </form>
+    <a href="{{ url_for('admin.campaigns') }}" class="btn btn-outline-secondary">Mégse</a>
+  </div>
+</div>
+{% endblock %}

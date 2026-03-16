@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+{% block title %}Játékok{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+  <div class="dashboard-header__content">
+    <h2 class="d-flex align-items-center gap-2">
+      Játékok
+      {% if show_recommendation %}<span class="badge bg-success small">Újonc nyomozó</span>{% endif %}
+    </h2>
+    <p class="text-muted">Kattints egy kártyára a részletekért, vagy indulj el a kampánnyal.</p>
+  </div>
+  <div class="dashboard-header__badge"><i class="fa-solid fa-user-secret me-1"></i>Válassz egy kampányt</div>
+</div>
+
+{% if show_recommendation and recommended_campaign %}
+<div class="recommended-first-card card mb-4">
+  <div class="card-body">
+    <h5 class="card-title recommended-first-card__title">Ajánlott első játék</h5>
+    <p class="small text-muted recommended-first-card__sub">Ezzel érdemes kezdened: könnyen induló kampány új nyomozóknak. Helyszín: Budapest.</p>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      {% if recommended_campaign.cover_image_url %}
+      <img src="{{ recommended_campaign.cover_image_url }}?w=120&auto=format" alt="" class="recommended-first-card__cover rounded">
+      {% endif %}
+      <div class="flex-grow-1 min-width-0">
+        <h6 class="mb-1">{{ recommended_campaign.title }}</h6>
+        <p class="small text-muted mb-1"><i class="fa-solid fa-city me-1"></i>Helyszín: Budapest</p>
+        {% if recommended_campaign.description %}
+        <p class="small text-muted mb-2 recommended-first-card__desc">{{ (recommended_campaign.description or '') | striptags | truncate(120) }}</p>
+        {% endif %}
+        <div class="small d-flex flex-wrap gap-2 text-muted">
+          {% if recommended_campaign.estimated_minutes %}<span><i class="fa-solid fa-clock me-1"></i>{{ recommended_campaign.estimated_minutes|human_minutes }}</span>{% endif %}
+          {% if recommended_campaign.distance_km %}<span><i class="fa-solid fa-route me-1"></i>{{ "%.2f"|format(recommended_campaign.distance_km|float) }} km</span>{% endif %}
+        </div>
+      </div>
+      <button type="button" class="btn btn-success btn-lg flex-shrink-0" id="recommendedCampaignOpenBtn" data-recommended-slug="{{ recommended_campaign.slug | e }}">
+        Megnézem ezt a küldetést
+      </button>
+      
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if cards %}
+<div class="dashboard-filters mb-3">
+  <div class="dashboard-filters__row">
+    <label class="dashboard-filters__label" for="filterCity">Város</label>
+    <select id="filterCity" class="form-select form-select-sm dashboard-filters__select" aria-label="Szűrés város szerint">
+      <option value="">Összes város</option>
+      {% for city in unique_cities %}
+      <option value="{{ city | e }}">{{ city }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="dashboard-filters__row">
+    <span class="dashboard-filters__label">Állapot</span>
+    <div class="dashboard-filters__status" role="group" aria-label="Szűrés állapot szerint">
+      <button type="button" class="dashboard-filters__pill active" data-status="">Összes</button>
+      <button type="button" class="dashboard-filters__pill" data-status="folyamatban">Folyamatban</button>
+      <button type="button" class="dashboard-filters__pill" data-status="megoldatlan">Megoldatlan</button>
+      <button type="button" class="dashboard-filters__pill" data-status="megoldott">Megoldott</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-4 campaign-grid" id="campaign-cards">
+  {% for card in cards %}
+  <div class="col campaign-card-col" data-city="{{ (card.city or '') | e }}" data-status="{{ card.status_key }}">
+    <div class="card h-100 campaign-card campaign-card-clickable"
+         role="button"
+         tabindex="0"
+         data-slug="{{ card.slug | e }}"
+         data-title="{{ card.title | e }}"
+         data-start-location="{{ (card.start_location or '') | e }}"
+         data-start-lat="{{ card.start_lat if card.start_lat is not none else '' }}"
+         data-start-lng="{{ card.start_lng if card.start_lng is not none else '' }}"
+         data-has-progress="{{ '1' if card.has_progress else '0' }}"
+         data-is-finished="{{ '1' if card.is_finished else '0' }}"
+         data-percent="{{ card.percent }}"
+         data-completed="{{ card.completed }}"
+         data-total="{{ card.total }}"
+         data-cover-url="{{ (card.cover_image_url or '') | e }}"
+         data-estimated-minutes="{{ card.estimated_minutes if card.estimated_minutes is not none else '' }}"
+         data-estimated-label="{{ (card.estimated_minutes|human_minutes) if card.estimated_minutes else '' | e }}"
+         data-distance-km="{{ card.distance_km if card.distance_km is not none else '' }}"
+         data-city="{{ (card.city or '') | e }}"
+         data-difficulty-label="{{ (card.difficulty_label or '') | e }}"
+         data-clue-xp-total="{{ card.clue_xp_total }}"
+         data-clue-coins-total="{{ card.clue_coins_total }}"
+         data-campaign-xp="{{ card.campaign_xp_reward }}"
+         data-campaign-coins="{{ card.campaign_coin_reward }}"
+         data-total-xp="{{ card.total_xp_reward }}"
+         data-total-coins="{{ card.total_coin_reward }}"
+         data-min-age="{{ card.min_age if card.min_age is not none else '' }}"
+         data-start-url="{{ url_for('game.start_campaign', slug=card.slug) }}"
+         data-play-url="{{ url_for('game.play_clue', slug=card.slug) }}"
+         data-reset-url="{{ url_for('game.reset_campaign', slug=card.slug) }}">
+
+      {% if card.cover_image_url %}
+      <img src="{{ card.cover_image_url }}?w=480&auto=format" class="card-img-top campaign-cover" alt="{{ card.title }}" loading="lazy">
+            {% endif %}
+
+            <div class="card-body campaign-card__body d-flex flex-column py-2">
+              <div class="campaign-card__top">
+                <h6 class="card-title mb-1" title="{{ card.title }}">{{ card.title }}</h6>
+            
+                <div class="campaign-meta">
+                  {% if card.estimated_minutes %}
+                    <span><i class="fa-solid fa-clock me-1"></i>{{ card.estimated_minutes|human_minutes }}</span>
+                  {% endif %}
+                  {% if card.distance_km %}
+                    <span><i class="fa-solid fa-route me-1"></i>{{ "%.2f"|format(card.distance_km) }} km</span>
+                  {% endif %}
+                  {% if card.total and card.total > 0 %}
+                    <span><i class="fa-solid fa-location-dot me-1"></i>{{ card.total }} nyom</span>
+                  {% endif %}
+                  {% if card.city %}
+                    <span><i class="fa-solid fa-city me-1"></i>{{ card.city }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            
+              {% if card.total and card.total > 0 %}
+              <div class="campaign-progress{% if card.is_finished %} campaign-progress--solved{% endif %}">
+                <div class="campaign-progress__top">
+                  <span>Előrehaladás</span>
+                  <span>{{ card.percent }}% ({{ card.completed }}/{{ card.total }})</span>
+                </div>
+                <div class="progress campaign-progress__bar">
+                  <div class="progress-bar{% if card.is_finished %} bg-success{% endif %}" style="width: {{ card.percent }}%"></div>
+                  {% if card.is_finished %}
+                  <div class="campaign-progress__overlay" aria-hidden="true"></div>
+                  <span class="campaign-progress__solved-label">Megoldva</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% else %}
+              <div class="small text-muted mb-2">Még nincs nyom</div>
+              {% endif %}
+            
+              <div class="campaign-card__hint">
+                <span>Az ügy részletei</span>
+                <i class="fa-solid fa-chevron-right ms-1"></i>
+              </div>
+            </div>
+
+      {# Hidden content for modal (HTML from DB rendered safely) #}
+      <div class="d-none campaign-detail-html">
+        <div class="campaign-detail-description">{% if card.description %}{{ card.description | safe }}{% endif %}</div>
+        <div class="campaign-detail-intro">{% if card.intro %}{{ card.intro | safe }}{% endif %}</div>
+        <div class="campaign-detail-goal">{% if card.story_goal %}{{ card.story_goal | safe }}{% endif %}</div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="col-12">
+    <div class="campaign-empty">Jelenleg nincs aktív kampány.</div>
+    </div>
+{% endfor %}
+</div>
+<div id="dashboard-no-results" class="dashboard-no-results d-none">
+  <div class="campaign-empty">Nincs a szűrőknek megfelelő kampány.</div>
+</div>
+
+{# Campaign detail modal #}
+<div class="modal fade campaign-modal" id="campaignDetailModal" tabindex="-1" aria-labelledby="campaignModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable campaign-modal__dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="campaignModalTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="campaign-modal-hero mb-4">
+          <div class="campaign-modal-cover"></div>
+
+          <div class="campaign-modal-hero__overlay">
+            <div class="campaign-modal-hero__top">
+              <div class="campaign-modal-tags d-flex flex-wrap gap-1"></div>
+            </div>
+
+            <div class="campaign-modal-hero__content">
+              <p class="campaign-modal-kicker mb-2">Városi nyomozás · indulás előtt</p>
+              <h3 class="campaign-modal-hero__title mb-2" id="campaignModalHeroTitle"></h3>
+              <p class="campaign-modal-hero__subtitle mb-3">
+                Fedezd fel a sztorit, kövesd a nyomokat, és oldd meg az ügyet a saját tempódban.
+              </p>
+
+              <div class="campaign-modal-stats"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="campaign-modal-rewards-wrapper mb-3" style="display: none;">
+          <div class="campaign-modal-rewards"></div>
+        </div>
+
+        <p class="campaign-modal-start mb-3 small"></p>
+        <div id="campaignModalMap" class="campaign-modal-map mb-3"></div>
+
+        <div class="campaign-modal-goal-wrap mb-3" style="display: none;">
+          <h6 class="small text-muted mb-1">A küldetés</h6>
+          <div class="campaign-modal-goal campaign-detail-block"></div>
+        </div>
+
+        <div class="campaign-modal-desc-wrap mb-3" style="display: none;">
+          <h6 class="small text-muted mb-1">Miről szól?</h6>
+          <div class="campaign-modal-description campaign-detail-block"></div>
+        </div>
+
+        <div class="campaign-modal-intro-wrap mb-3" style="display: none;">
+          <h6 class="small text-muted mb-1">Történeti bevezető</h6>
+          <div class="campaign-modal-intro campaign-detail-block"></div>
+        </div>
+
+        <div class="campaign-modal-progress mb-3"></div>
+      </div>
+
+      <div class="modal-footer campaign-modal__footer">
+        <div class="campaign-modal-footer__primary">
+          <a href="#" class="btn btn-success campaign-modal-btn-start" style="display: none;">
+            <i class="fa-solid fa-magnifying-glass me-2"></i>Nyomozás indítása
+          </a>
+          <a href="#" class="btn btn-primary campaign-modal-btn-continue" style="display: none;">
+            <i class="fa-solid fa-footprints me-2"></i>Ügy folytatása
+          </a>
+        </div>
+        <div class="campaign-modal-footer__secondary">
+          <form method="post" class="campaign-modal-form-reset" action="#" style="display: none;">
+            <button type="button" class="btn btn-outline-warning campaign-modal-btn-reset">
+              Újrakezdés
+            </button>
+          </form>
+          <button type="button" class="btn btn-outline-secondary campaign-modal-btn-close" data-bs-dismiss="modal">Bezárás</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  var campaignModal = document.getElementById('campaignDetailModal');
+  if (!campaignModal) return;
+  var mapInstance = null;
+
+  function initMap(lat, lng, title) {
+    if (mapInstance) {
+      mapInstance.remove();
+      mapInstance = null;
+        }
+    var container = document.getElementById('campaignModalMap');
+    if (!container || isNaN(lat) || isNaN(lng)) return;
+    container.style.display = 'block';
+    container.innerHTML = '';
+    try {
+      mapInstance = L.map(container).setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(mapInstance);
+      L.marker([lat, lng]).addTo(mapInstance).bindPopup(title || 'Indulási pont');
+    } catch (e) {
+      container.style.display = 'none';
+    }
+  }
+
+  function openCampaignModal(cardEl) {
+    var slug = cardEl.getAttribute('data-slug');
+    var title = cardEl.getAttribute('data-title');
+    var startLocation = cardEl.getAttribute('data-start-location');
+    var startLat = cardEl.getAttribute('data-start-lat');
+    var startLng = cardEl.getAttribute('data-start-lng');
+    var hasProgress = cardEl.getAttribute('data-has-progress') === '1';
+    var isFinished = cardEl.getAttribute('data-is-finished') === '1';
+    var percent = cardEl.getAttribute('data-percent') || '0';
+    var completed = cardEl.getAttribute('data-completed') || '0';
+    var total = cardEl.getAttribute('data-total') || '0';
+    var coverUrl = cardEl.getAttribute('data-cover-url');
+    var estimatedLabel = cardEl.getAttribute('data-estimated-label');
+    var distanceKm = cardEl.getAttribute('data-distance-km');
+    var city = cardEl.getAttribute('data-city');
+    var difficultyLabel = cardEl.getAttribute('data-difficulty-label');
+    var minAge = cardEl.getAttribute('data-min-age');
+    var startUrl = cardEl.getAttribute('data-start-url');
+    var playUrl = cardEl.getAttribute('data-play-url');
+    var resetUrl = cardEl.getAttribute('data-reset-url');
+    var clueXpTotal = parseInt(cardEl.getAttribute('data-clue-xp-total') || '0', 10);
+    var clueCoinsTotal = parseInt(cardEl.getAttribute('data-clue-coins-total') || '0', 10);
+    var campaignXp = parseInt(cardEl.getAttribute('data-campaign-xp') || '0', 10);
+    var campaignCoins = parseInt(cardEl.getAttribute('data-campaign-coins') || '0', 10);
+    var totalXp = parseInt(cardEl.getAttribute('data-total-xp') || '0', 10);
+    var totalCoins = parseInt(cardEl.getAttribute('data-total-coins') || '0', 10);
+
+    document.getElementById('campaignModalTitle').textContent = title;
+
+    var coverDiv = campaignModal.querySelector('.campaign-modal-cover');
+    if (coverUrl) {
+      coverDiv.innerHTML = '<img src="' + coverUrl.replace(/"/g, '&quot;') + '" alt="" class="img-fluid">';
+            coverDiv.style.display = 'block';
+    } else {
+      coverDiv.innerHTML = '';
+      coverDiv.style.display = 'none';
+    }
+
+    document.getElementById('campaignModalHeroTitle').textContent = title;
+
+var walkingMinutes = '';
+if (distanceKm && !isNaN(parseFloat(distanceKm))) {
+  walkingMinutes = Math.ceil((parseFloat(distanceKm) / 4.5) * 60); // kb. 4.5 km/h séta
+}
+
+var stats = [];
+
+if (estimatedLabel) {
+  stats.push(
+    '<div class="campaign-stat-card">' +
+      '<div class="campaign-stat-card__icon"><i class="fa-solid fa-clock"></i></div>' +
+      '<div class="campaign-stat-card__text">' +
+        '<div class="campaign-stat-card__label">Játékidő</div>' +
+        '<div class="campaign-stat-card__value">' + estimatedLabel + '</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+if (distanceKm) {
+  stats.push(
+    '<div class="campaign-stat-card">' +
+      '<div class="campaign-stat-card__icon"><i class="fa-solid fa-route"></i></div>' +
+      '<div class="campaign-stat-card__text">' +
+        '<div class="campaign-stat-card__label">Távolság</div>' +
+        '<div class="campaign-stat-card__value">' + distanceKm + ' km' + (walkingMinutes ? ' · ~' + walkingMinutes + ' perc séta' : '') + '</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+if (total && parseInt(total, 10) > 0) {
+  stats.push(
+    '<div class="campaign-stat-card">' +
+      '<div class="campaign-stat-card__icon"><i class="fa-solid fa-location-dot"></i></div>' +
+      '<div class="campaign-stat-card__text">' +
+        '<div class="campaign-stat-card__label">Nyomok száma</div>' +
+        '<div class="campaign-stat-card__value">' + total + ' állomás</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+if (city) {
+  stats.push(
+    '<div class="campaign-stat-card">' +
+      '<div class="campaign-stat-card__icon"><i class="fa-solid fa-city"></i></div>' +
+      '<div class="campaign-stat-card__text">' +
+        '<div class="campaign-stat-card__label">Helyszín</div>' +
+        '<div class="campaign-stat-card__value">' + city + '</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+campaignModal.querySelector('.campaign-modal-stats').innerHTML = stats.join('');
+
+    // Reward preview – hangsúlyos, természetes magyar szöveggel
+    var rewardsHtml = '';
+    if (clueXpTotal > 0 || clueCoinsTotal > 0 || campaignXp > 0 || campaignCoins > 0) {
+      var clueParts = [];
+      if (clueXpTotal > 0) clueParts.push('+' + clueXpTotal + ' XP');
+      if (clueCoinsTotal > 0) clueParts.push('+' + clueCoinsTotal + ' coin');
+
+      var campaignParts = [];
+      if (campaignXp > 0) campaignParts.push('+' + campaignXp + ' XP');
+      if (campaignCoins > 0) campaignParts.push('+' + campaignCoins + ' coin');
+
+      var totalParts = [];
+      if (totalXp > 0) totalParts.push('+' + totalXp + ' XP');
+      if (totalCoins > 0) totalParts.push('+' + totalCoins + ' coin');
+
+      rewardsHtml =
+        '<div class="campaign-reward-preview">' +
+          '<div class="campaign-reward-preview__row">' +
+            '<span class="campaign-reward-preview__label">Nyomokból szerezhető</span>' +
+            '<span class="campaign-reward-preview__value">' + (clueParts.join(', ') || '–') + '</span>' +
+          '</div>' +
+          '<div class="campaign-reward-preview__row">' +
+            '<span class="campaign-reward-preview__label">Küldetés teljesítéséért</span>' +
+            '<span class="campaign-reward-preview__value">' + (campaignParts.join(', ') || '–') + '</span>' +
+          '</div>' +
+          '<div class="campaign-reward-preview__divider"></div>' +
+          '<div class="campaign-reward-preview__row campaign-reward-preview__row--total">' +
+            '<span class="campaign-reward-preview__label">Összesen megszerezhető</span>' +
+            '<span class="campaign-reward-preview__value">' + (totalParts.join(', ') || '–') + '</span>' +
+          '</div>' +
+        '</div>';
+      var rewardsWrapper = campaignModal.querySelector('.campaign-modal-rewards-wrapper');
+      if (rewardsWrapper) {
+        rewardsWrapper.style.display = 'block';
+      }
+    } else {
+      var rewardsWrapper = campaignModal.querySelector('.campaign-modal-rewards-wrapper');
+      if (rewardsWrapper) {
+        rewardsWrapper.style.display = 'none';
+      }
+    }
+    campaignModal.querySelector('.campaign-modal-rewards').innerHTML = rewardsHtml;
+
+
+var tags = [];
+if (difficultyLabel) tags.push('<span class="badge bg-secondary">' + difficultyLabel + '</span>');
+if (minAge && parseInt(minAge, 10) > 0) tags.push('<span class="badge bg-info text-dark">' + minAge + '+ év</span>');
+
+var estMins = parseInt(cardEl.getAttribute('data-estimated-minutes'), 10) || 0;
+if (estMins > 60) tags.push('<span class="badge bg-success">Hosszabb kaland</span>');
+else if (estMins >= 30) tags.push('<span class="badge bg-warning text-dark">Közepes küldetés</span>');
+else if (estMins > 0) tags.push('<span class="badge bg-info text-dark">Gyors kaland</span>');
+
+if (difficultyLabel && difficultyLabel.toLowerCase().includes('könny')) {
+  tags.push('<span class="badge bg-success">Kezdőknek ajánlott</span>');
+}
+
+if (distanceKm && parseFloat(distanceKm) >= 2) {
+  tags.push('<span class="badge bg-secondary">Sétálós küldetés</span>');
+}
+
+    campaignModal.querySelector('.campaign-modal-tags').innerHTML = tags.join(' ') || '';
+
+    var startP = campaignModal.querySelector('.campaign-modal-start');
+    if (startLocation) {
+      startP.innerHTML = '<i class="fa-solid fa-location-crosshairs me-2"></i><strong>Indulás:</strong> ' + startLocation;
+      startP.style.display = 'block';
+    } else {
+      startP.innerHTML = '';
+      startP.style.display = 'none';
+    }
+
+    var lat = parseFloat(startLat);
+    var lng = parseFloat(startLng);
+    campaignModal.setAttribute('data-map-lat', lat && !isNaN(lat) ? lat : '');
+    campaignModal.setAttribute('data-map-lng', lng && !isNaN(lng) ? lng : '');
+    campaignModal.setAttribute('data-map-title', startLocation || title || '');
+    var mapContainer = document.getElementById('campaignModalMap');
+    if (!isNaN(lat) && !isNaN(lng)) {
+      mapContainer.style.display = 'block';
+    } else {
+      mapContainer.style.display = 'none';
+      if (mapInstance) {
+        mapInstance.remove();
+        mapInstance = null;
+      }
+    }
+
+    var descEl = cardEl.querySelector('.campaign-detail-description');
+    var introEl = cardEl.querySelector('.campaign-detail-intro');
+    var goalEl = cardEl.querySelector('.campaign-detail-goal');
+    var descHtml = descEl ? descEl.innerHTML.trim() : '';
+    var introHtml = introEl ? introEl.innerHTML.trim() : '';
+    var goalHtml = goalEl ? goalEl.innerHTML.trim() : '';
+    campaignModal.querySelector('.campaign-modal-description').innerHTML = descHtml;
+    campaignModal.querySelector('.campaign-modal-intro').innerHTML = introHtml;
+    campaignModal.querySelector('.campaign-modal-goal').innerHTML = goalHtml;
+    campaignModal.querySelector('.campaign-modal-desc-wrap').style.display = descHtml ? 'block' : 'none';
+    campaignModal.querySelector('.campaign-modal-intro-wrap').style.display = introHtml ? 'block' : 'none';
+    campaignModal.querySelector('.campaign-modal-goal-wrap').style.display = goalHtml ? 'block' : 'none';
+
+    var progressDiv = campaignModal.querySelector('.campaign-modal-progress');
+    if (total && parseInt(total, 10) > 0) {
+      var progressLabel = isFinished
+  ? 'Ezt a küldetést már megoldottad'
+  : (hasProgress ? 'Már elkezdted ezt a küldetést' : 'Még nem kezdted el');
+
+progressDiv.innerHTML =
+  '<div class="small mb-2 text-muted">' + progressLabel + '</div>' +
+  '<div class="d-flex justify-content-between small mb-1"><span>Előrehaladás</span><span>' + percent + '% (' + completed + '/' + total + ')</span></div>' +
+  '<div class="progress"><div class="progress-bar' + (isFinished ? ' bg-success' : '') + '" style="width: ' + percent + '%"></div></div>';
+
+      progressDiv.style.display = 'block';
+    } else {
+      progressDiv.innerHTML = '';
+      progressDiv.style.display = 'none';
+    }
+
+    var btnStart = campaignModal.querySelector('.campaign-modal-btn-start');
+var btnContinue = campaignModal.querySelector('.campaign-modal-btn-continue');
+var formReset = campaignModal.querySelector('.campaign-modal-form-reset');
+
+btnStart.style.display = 'none';
+btnContinue.style.display = 'none';
+formReset.style.display = 'none';
+
+btnStart.href = startUrl;
+btnContinue.href = playUrl;
+formReset.action = resetUrl;
+
+var completedNum = parseInt(completed, 10) || 0;
+var totalNum = parseInt(total, 10) || 0;
+var hasActualProgress = completedNum > 0;
+
+if (isFinished) {
+  formReset.style.display = 'inline-block';
+} else if (hasActualProgress) {
+  btnContinue.style.display = 'inline-block';
+  formReset.style.display = 'inline-block';
+} else {
+  btnStart.style.display = 'inline-block';
+}
+  }
+
+  campaignModal.addEventListener('shown.bs.modal', function() {
+    var lat = parseFloat(campaignModal.getAttribute('data-map-lat'));
+    var lng = parseFloat(campaignModal.getAttribute('data-map-lng'));
+    var mapTitle = campaignModal.getAttribute('data-map-title') || '';
+    if (!isNaN(lat) && !isNaN(lng)) {
+  setTimeout(function() { initMap(lat, lng, mapTitle); }, 100);
+}
+  });
+
+  campaignModal.addEventListener('hidden.bs.modal', function() {
+    if (mapInstance) {
+      mapInstance.remove();
+      mapInstance = null;
+    }
+  });
+
+  campaignModal.addEventListener('click', function(e) {
+    var btn = e.target.closest('.campaign-modal-btn-reset');
+    if (!btn) return;
+    e.preventDefault();
+    var form = btn.closest('form');
+    if (form && window.DetectiveConfirm) {
+      window.DetectiveConfirm.show({
+        title: 'Újrakezdés',
+        message: 'Biztosan újrakezded? Az eddigi haladásod törlődik.',
+        confirmLabel: 'Igen, újrakezdem',
+        form: form,
+        danger: true
+      });
+    }
+  });
+
+  document.getElementById('campaign-cards').addEventListener('click', function(e) {
+    var card = e.target.closest('.campaign-card-clickable');
+    if (!card || e.target.closest('a') || e.target.closest('button')) return;
+    openCampaignModal(card);
+    new bootstrap.Modal(campaignModal).show();
+  });
+
+  document.getElementById('campaign-cards').addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var card = e.target.closest('.campaign-card-clickable');
+    if (!card) return;
+    e.preventDefault();
+    openCampaignModal(card);
+    new bootstrap.Modal(campaignModal).show();
+  });
+
+  var recommendedBtn = document.getElementById('recommendedCampaignOpenBtn');
+  if (recommendedBtn) {
+    recommendedBtn.addEventListener('click', function() {
+      var slug = this.getAttribute('data-recommended-slug');
+      if (!slug) return;
+      var cards = document.querySelectorAll('.campaign-card-clickable');
+      for (var i = 0; i < cards.length; i++) {
+        if (cards[i].getAttribute('data-slug') === slug) {
+          openCampaignModal(cards[i]);
+          new bootstrap.Modal(campaignModal).show();
+          break;
+        }
+      }
+    });
+  }
+
+  function applyDashboardFilters() {
+    var cityVal = (document.getElementById('filterCity') && document.getElementById('filterCity').value) || '';
+    var statusVal = '';
+    var activePill = document.querySelector('.dashboard-filters__pill.active');
+    if (activePill && activePill.getAttribute('data-status') !== null) {
+      statusVal = activePill.getAttribute('data-status') || '';
+    }
+    var cols = document.querySelectorAll('.campaign-card-col');
+    var visible = 0;
+    cols.forEach(function(col) {
+      var cardCity = (col.getAttribute('data-city') || '').trim();
+      var cardStatus = (col.getAttribute('data-status') || '').trim();
+      var cityMatch = !cityVal || cardCity === cityVal;
+      var statusMatch = !statusVal || cardStatus === statusVal;
+      var show = cityMatch && statusMatch;
+      col.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    var noResults = document.getElementById('dashboard-no-results');
+    if (noResults) noResults.classList.toggle('d-none', cols.length === 0 || visible > 0);
+  }
+
+  var filterCity = document.getElementById('filterCity');
+  if (filterCity) filterCity.addEventListener('change', applyDashboardFilters);
+
+  var pills = document.querySelectorAll('.dashboard-filters__pill');
+  pills.forEach(function(pill) {
+    pill.addEventListener('click', function() {
+      pills.forEach(function(p) { p.classList.remove('active'); });
+      this.classList.add('active');
+      applyDashboardFilters();
+    });
+  });
+})();
+</script>
+{% endblock %}

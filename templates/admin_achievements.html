@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Admin – Achievements{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2>Achievements</h2>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary btn-sm">← Admin</a>
+    <a href="{{ url_for('admin.campaigns') }}" class="btn btn-outline-secondary">Kampányok</a>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5>Új achievement</h5>
+    <form method="post" class="row g-3 mb-2">
+      <div class="col-md-4">
+        <label class="form-label">Név</label>
+        <input type="text" name="name" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Slug</label>
+        <input type="text" name="slug" class="form-control" required>
+      </div>
+      <div class="col-md-12">
+        <label class="form-label">Leírás</label>
+        <textarea name="description" class="form-control" rows="2" placeholder="Mikor kapja meg a játékos?"></textarea>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Badge kép URL</label>
+        <input type="text" name="badge_image_url" class="form-control" placeholder="https://...">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Progress típus</label>
+        <select name="criteria_type" class="form-select">
+          <option value="">— nincs (manuális) —</option>
+          <option value="clues_solved">Nyomok megoldva</option>
+          <option value="campaigns_completed">Kampányok befejezve</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Célérték</label>
+        <input type="number" name="criteria_value" class="form-control" min="1" placeholder="pl. 5">
+      </div>
+      <div class="col-md-12">
+        <button type="submit" class="btn btn-primary">Mentés</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped align-middle">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Név</th>
+      <th>Slug</th>
+      <th>Progress</th>
+      <th>Aktív</th>
+      <th>Badge</th>
+      <th>Művelet</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in achievements %}
+    <tr>
+      <td>{{ a.id }}</td>
+      <td>{{ a.name }}</td>
+      <td><code>{{ a.slug }}</code></td>
+      <td>
+        {% if a.criteria_type and a.criteria_value is not none %}
+          {% if a.criteria_type == 'clues_solved' %}{{ a.criteria_value }} nyom
+          {% elif a.criteria_type == 'campaigns_completed' %}{{ a.criteria_value }} kampány
+          {% else %}{{ a.criteria_type }}: {{ a.criteria_value }}{% endif %}
+        {% else %}
+          <span class="text-muted">—</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if a.is_active %}
+          <span class="badge bg-success">aktív</span>
+        {% else %}
+          <span class="badge bg-secondary">inaktív</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if a.badge_image_url %}
+          <img src="{{ a.badge_image_url }}" alt="{{ a.name }}" style="height:32px;">
+        {% else %}
+          <span class="text-muted small">nincs kép</span>
+        {% endif %}
+      </td>
+      <td>
+        <a class="btn btn-sm btn-outline-warning"
+           href="{{ url_for('admin.toggle_achievement', aid=a.id) }}">
+          Aktív váltás
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
+

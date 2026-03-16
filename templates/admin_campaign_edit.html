@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% block title %}Kampány szerkesztése – {{ campaign.title }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2 class="mb-0">Kampány szerkesztése</h2>
+  <div class="d-flex gap-2">
+    <button type="button"
+            class="btn btn-outline-light btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#campaignStoryPreviewModal">
+      Teljes sztori előnézet
+    </button>
+    <a href="{{ url_for('admin.clues', cid=campaign.id) }}" class="btn btn-outline-primary btn-sm">Nyomok</a>
+    <a href="{{ url_for('admin.campaigns') }}" class="btn btn-outline-secondary btn-sm">Vissza</a>
+  </div>
+</div>
+
+<form method="post" class="card card-body mb-4">
+  <h5 class="mb-3">Alapadatok</h5>
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <label class="form-label">Cím <span class="text-danger">*</span></label>
+      <input type="text" name="title" class="form-control" value="{{ campaign.title or '' }}" required>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Slug <span class="text-danger">*</span></label>
+      <input type="text" name="slug" class="form-control" value="{{ campaign.slug or '' }}" required>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Leírás</label>
+      <div class="quill-field js-quill-wrapper">
+        <textarea name="description" class="form-control d-none js-quill-input" rows="4">{{ campaign.description or '' }}</textarea>
+        <div class="js-quill-editor"></div>
+      </div>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Bevezető (intro)</label>
+      <div class="quill-field js-quill-wrapper">
+        <textarea name="intro" class="form-control d-none js-quill-input" rows="4">{{ campaign.intro or '' }}</textarea>
+        <div class="js-quill-editor"></div>
+      </div>
+    </div>
+  </div>
+
+  <h5 class="mb-3">Történet / narratíva</h5>
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <label class="form-label">Történet célja (story goal)</label>
+      <div class="quill-field js-quill-wrapper">
+        <textarea name="story_goal" class="form-control d-none js-quill-input" rows="3">{{ campaign.story_goal or '' }}</textarea>
+        <div class="js-quill-editor"></div>
+      </div>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Befejezési üzenet (completion message)</label>
+      <div class="quill-field js-quill-wrapper">
+        <textarea name="completion_message" class="form-control d-none js-quill-input" rows="5" placeholder="A játékos ezt látja sikeres befejezéskor...">{{ campaign.completion_message or '' }}</textarea>
+        <div class="js-quill-editor"></div>
+      </div>
+    </div>
+  </div>
+
+  <h5 class="mb-3">Média és helyszín</h5>
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <label class="form-label">Borítókép URL</label>
+      <input type="url" name="cover_image_url" class="form-control" value="{{ campaign.cover_image_url or '' }}" placeholder="https://...">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Kezdő helyszín (szöveg)</label>
+      <input type="text" name="start_location" class="form-control" value="{{ campaign.start_location or '' }}" placeholder="Pl. Hősök tere">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Város</label>
+      <input type="text" name="city" class="form-control" value="{{ campaign.city or '' }}" placeholder="Pl. Budapest">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Kezdő pont szélesség (lat)</label>
+      <input type="number" name="start_lat" class="form-control" step="any" value="{{ campaign.start_lat or '' }}" placeholder="47.5079">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Kezdő pont hosszúság (lng)</label>
+      <input type="number" name="start_lng" class="form-control" step="any" value="{{ campaign.start_lng or '' }}" placeholder="19.0402">
+    </div>
+  </div>
+
+  <h5 class="mb-3">Játék meta</h5>
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <label class="form-label">Becsült idő (perc)</label>
+      <input type="number" name="estimated_minutes" class="form-control" min="1" value="{{ campaign.estimated_minutes or '' }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Táv (km)</label>
+      <input type="number" name="distance_km" class="form-control" min="0" step="0.01" value="{{ campaign.distance_km or '' }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Nehézség</label>
+      <select name="difficulty" class="form-select">
+        <option value="">—</option>
+        <option value="1" {% if campaign.difficulty == 1 %}selected{% endif %}>1 – Könnyű</option>
+        <option value="2" {% if campaign.difficulty == 2 %}selected{% endif %}>2 – Közepes</option>
+        <option value="3" {% if campaign.difficulty == 3 %}selected{% endif %}>3 – Nehéz</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Min. életkor</label>
+      <input type="number" name="min_age" class="form-control" min="0" value="{{ campaign.min_age or '' }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Kategória ID</label>
+      <input type="number" name="category_id" class="form-control" value="{{ campaign.category_id or '' }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Befejezési jutalom: XP</label>
+      <input type="number" name="xp_reward" class="form-control" min="0" value="{{ campaign.xp_reward or '' }}" placeholder="Üres = nehézség alapján">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Befejezési jutalom: coin</label>
+      <input type="number" name="coins_reward" class="form-control" min="0" value="{{ campaign.coins_reward or '' }}" placeholder="Üres = nehézség alapján">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Quest sorozat slug</label>
+      <input type="text" name="quest_series_slug" class="form-control" value="{{ campaign.quest_series_slug or '' }}" placeholder="pl. budapest-explorer">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Státusz</label>
+      <select name="status" class="form-select">
+        <option value="published" {% if (campaign.status or 'published') == 'published' %}selected{% endif %}>published</option>
+        <option value="draft" {% if campaign.status == 'draft' %}selected{% endif %}>draft</option>
+        <option value="archived" {% if campaign.status == 'archived' %}selected{% endif %}>archived</option>
+      </select>
+    </div>
+    <div class="col-12">
+      <div class="form-check">
+        <input type="checkbox" name="is_active" class="form-check-input" value="1" id="camp_is_active" {% if campaign.is_active %}checked{% endif %}>
+        <label class="form-check-label" for="camp_is_active">Aktív (látható a játékosoknak)</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Mentés</button>
+    <a href="{{ url_for('admin.campaigns') }}" class="btn btn-outline-secondary">Mégse</a>
+  </div>
+</form>
+
+{% block scripts %}
+  {{ super() }}
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      if (typeof Quill === "undefined") return;
+  
+      document.querySelectorAll(".js-quill-wrapper").forEach(function (wrapper) {
+        var textarea = wrapper.querySelector(".js-quill-input");
+        var editorEl = wrapper.querySelector(".js-quill-editor");
+  
+        if (!textarea || !editorEl) return;
+  
+        // védelem a dupla inicializálás ellen
+        if (editorEl.dataset.quillInitialized === "1") return;
+  
+        var quill = new Quill(editorEl, {
+          theme: "snow",
+          placeholder: "Írj ide...",
+          modules: {
+            toolbar: [
+              [{ header: [1, 2, 3, false] }],
+              ["bold", "italic", "underline"],
+              [{ list: "ordered" }, { list: "bullet" }],
+              ["link"],
+              ["clean"]
+            ]
+          }
+        });
+  
+        if (textarea.value && textarea.value.trim() !== "") {
+          quill.root.innerHTML = textarea.value;
+        }
+  
+        editorEl.__quillInstance = quill;
+        editorEl.dataset.quillInitialized = "1";
+      });
+  
+      var form = document.querySelector("form");
+      if (form && !form.dataset.quillSubmitBound) {
+        form.addEventListener("submit", function () {
+          document.querySelectorAll(".js-quill-wrapper").forEach(function (wrapper) {
+            var textarea = wrapper.querySelector(".js-quill-input");
+            var editorEl = wrapper.querySelector(".js-quill-editor");
+            if (!textarea || !editorEl || !editorEl.__quillInstance) return;
+            textarea.value = editorEl.__quillInstance.root.innerHTML;
+          });
+        });
+  
+        form.dataset.quillSubmitBound = "1";
+      }
+    });
+  </script>
+{% endblock %}
+
+{# Kampány teljes sztori előnézet (intro, story_goal, completion, nyomok) #}
+<div class="modal fade" id="campaignStoryPreviewModal" tabindex="-1" aria-labelledby="campaignStoryPreviewLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="campaignStoryPreviewLabel">Teljes sztori – {{ campaign.title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <h6 class="text-muted text-uppercase small mb-1">Bevezető</h6>
+          <div class="admin-story-preview__body small">
+            {% if campaign.intro %}
+              {{ campaign.intro|safe }}
+            {% else %}
+              <span class="text-muted fst-italic">Nincs bevezető megadva.</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <h6 class="text-muted text-uppercase small mb-1">Történet célja</h6>
+          <div class="admin-story-preview__body small">
+            {% if campaign.story_goal %}
+              {{ campaign.story_goal|safe }}
+            {% else %}
+              <span class="text-muted fst-italic">Nincs történet célja megadva.</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h6 class="text-muted text-uppercase small mb-1">Befejezési üzenet</h6>
+          <div class="admin-story-preview__body small">
+            {% if campaign.completion_message %}
+              {{ campaign.completion_message|safe }}
+            {% else %}
+              <span class="text-muted fst-italic">Nincs befejezési üzenet megadva.</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <h6 class="text-muted text-uppercase small mb-2">Nyomok</h6>
+        {% if campaign.clues %}
+          <ol class="admin-story-preview list-unstyled">
+            {% for c in campaign.clues %}
+            <li class="admin-story-preview__item mb-4">
+              <div class="admin-story-preview__header mb-1">
+                <span class="badge bg-secondary me-2">#{{ c.order_index }}</span>
+                <strong>{{ c.title }}</strong>
+                {% if c.location_name %}
+                  <span class="text-muted small ms-2">{{ c.location_name }}</span>
+                {% endif %}
+              </div>
+              <div class="admin-story-preview__body small">
+                {{ c.text|safe }}
+              </div>
+              {% if c.hint %}
+              <div class="admin-story-preview__hint text-muted small mt-1">
+                <i class="fa-solid fa-lightbulb me-1"></i>Tipp: {{ c.hint }}
+              </div>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p class="text-muted mb-0">Ehhez a kampányhoz még nincs egyetlen nyom sem.</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezárás</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

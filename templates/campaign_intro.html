@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}📖 Bevezető – {{ campaign.title }}{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="card shadow-sm border-0 p-4">
+    <div class="row g-4 align-items-center">
+      {% if campaign.cover_image_url %}
+      <div class="col-md-5 text-center">
+        <img src="{{ campaign.cover_image_url }}" alt="{{ campaign.title }}"
+             class="img-fluid rounded" style="max-height: 300px;">
+      </div>
+      {% endif %}
+      <div class="col-md-7">
+        <h2 class="mb-3">{{ campaign.title }}</h2>
+        <p class="text-muted">
+          Kampány hossza: kb. {{ campaign.distance_km }} km, időtartam: ~{{ campaign.estimated_minutes }} perc
+        </p>
+        {% if campaign.intro %}
+          <p class="mb-3">{{ campaign.intro }}</p>
+        {% endif %}
+        <a href="{{ url_for('game.play_clue', slug=campaign.slug) }}" class="btn btn-success btn-lg">
+          Első nyom felkutatása
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

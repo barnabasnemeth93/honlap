@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Felhasználó szerkesztése – {{ user.username }}{% endblock %}
+{% block content %}
+<div class="admin-header d-flex align-items-center justify-content-between mb-4">
+  <h2>Felhasználó szerkesztése</h2>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.players') }}" class="btn btn-outline-secondary">← Játékosok</a>
+    <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary btn-sm">Admin</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      {% if user.avatar_url %}
+      <img src="{{ user.avatar_url }}" alt="" class="rounded-circle" style="width: 56px; height: 56px; object-fit: cover;">
+      {% else %}
+      <div class="rounded-circle bg-secondary bg-opacity-25 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; font-size: 1.5rem;">{{ (user.username[:1] if user.username else '?')|upper }}</div>
+      {% endif %}
+      <div>
+        <strong>{{ user.username }}</strong>
+        <span class="badge {% if user.role == 'admin' %}bg-danger{% else %}bg-secondary{% endif %} ms-2">{{ user.role }}</span>
+        <div class="small text-muted">{{ user.email }}</div>
+      </div>
+    </div>
+
+    <form method="post" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Felhasználónév <span class="text-danger">*</span></label>
+        <input type="text" name="username" class="form-control" value="{{ user.username }}" required maxlength="80">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">E-mail <span class="text-danger">*</span></label>
+        <input type="email" name="email" class="form-control" value="{{ user.email }}" required maxlength="255">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Szerepkör</label>
+        <select name="role" class="form-select">
+          <option value="user" {% if user.role == 'user' %}selected{% endif %}>user</option>
+          <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>admin</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Mentés</button>
+        <a href="{{ url_for('admin.players') }}" class="btn btn-outline-secondary">Mégse</a>
+      </div>
+    </form>
+
+    <p class="small text-muted mt-3 mb-0">A jelszót itt nem lehet megváltoztatni. A felhasználónak a profil oldalon kell új jelszót kérnie (elfelejtett jelszó) vagy bejelentkezve megváltoztatni.</p>
+  </div>
+</div>
+{% endblock %}

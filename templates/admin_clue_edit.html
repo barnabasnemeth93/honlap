@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Admin – Nyom szerkesztése{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2 class="mb-0">Nyom szerkesztése – {{ campaign.title }}</h2>
+  <button type="button"
+          class="btn btn-outline-light btn-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#storyPreviewModal">
+    Teljes sztori előnézet
+  </button>
+</div>
+
+<form method="post" class="card p-3 mb-4">
+  <div class="row g-3">
+    <div class="col-md-2">
+      <label class="form-label">Sorszám</label>
+      <input class="form-control" name="order_index" type="number" min="1"
+             value="{{ clue.order_index }}" required>
+    </div>
+
+    <div class="col-md-10">
+      <label class="form-label">Cím</label>
+      <input class="form-control" name="title" value="{{ clue.title }}" required>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Hely neve</label>
+      <input class="form-control" name="location_name"
+             value="{{ clue.location_name or '' }}" placeholder="Pl. Hősök tere – északi oldal">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Szélesség (lat)</label>
+      <input class="form-control" name="latitude" type="number" step="any"
+             value="{{ clue.latitude or '' }}" placeholder="47.514321">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Hosszúság (lng)</label>
+      <input class="form-control" name="longitude" type="number" step="any"
+             value="{{ clue.longitude or '' }}" placeholder="19.077654">
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Megoldókód</label>
+      <input class="form-control" name="answer_code" value="{{ clue.answer_code }}" required>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">XP jutalom <span class="text-muted">(üres = alap 5)</span></label>
+      <input class="form-control" name="xp_reward" type="number" min="0"
+             value="{{ clue.xp_reward if clue.xp_reward is not none else '' }}" placeholder="5">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Érme jutalom <span class="text-muted">(üres = alap 3)</span></label>
+      <input class="form-control" name="coins_reward" type="number" min="0"
+             value="{{ clue.coins_reward if clue.coins_reward is not none else '' }}" placeholder="3">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Szöveg</label>
+      <textarea class="form-control" name="text" rows="4" required>{{ clue.text }}</textarea>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Tipp (opcionális)</label>
+      <input class="form-control" name="hint" value="{{ clue.hint or '' }}">
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+      <button class="btn btn-primary">Mentés</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.clues', cid=campaign.id) }}">Mégse</a>
+    </div>
+  </div>
+</form>
+
+{# Teljes sztori előnézet – minden nyom szövege egyben #}
+<div class="modal fade" id="storyPreviewModal" tabindex="-1" aria-labelledby="storyPreviewLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="storyPreviewLabel">Teljes sztori – {{ campaign.title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+      </div>
+      <div class="modal-body">
+        {% if campaign.clues %}
+          <ol class="admin-story-preview list-unstyled">
+            {% for c in campaign.clues %}
+            <li class="admin-story-preview__item mb-4">
+              <div class="admin-story-preview__header mb-1">
+                <span class="badge bg-secondary me-2">#{{ c.order_index }}</span>
+                <strong>{{ c.title }}</strong>
+                {% if c.location_name %}
+                  <span class="text-muted small ms-2">{{ c.location_name }}</span>
+                {% endif %}
+              </div>
+              <div class="admin-story-preview__body small">
+                {{ c.text|safe }}
+              </div>
+              {% if c.hint %}
+              <div class="admin-story-preview__hint text-muted small mt-1">
+                <i class="fa-solid fa-lightbulb me-1"></i>Tipp: {{ c.hint }}
+              </div>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p class="text-muted mb-0">Ehhez a kampányhoz még nincs egyetlen nyom sem.</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezárás</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

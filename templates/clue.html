@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Nyom – {{ campaign.title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="clue-gameboard-wrapper mb-4">
+      <div class="clue-gameboard" role="navigation" aria-label="Nyomozás előrehaladása">
+        <a href="{{ url_for('game.campaign_intro', slug=campaign.slug) }}"
+           class="clue-gameboard__item clue-gameboard__item--intro">
+          <span class="clue-gameboard__circle clue-gameboard__circle--intro">
+            <i class="fa-solid fa-book-open"></i>
+          </span>
+          <span class="clue-gameboard__label">Bevezető</span>
+        </a>
+        {% for i in range(1, total_clues + 1) %}
+          {% set is_unlocked = i in unlocked_indexes %}
+          {% set is_current = clue and clue.order_index == i %}
+          {% set is_solved = solved_indexes is defined and i in solved_indexes %}
+          {% set state_class =
+            'clue-gameboard__item--current' if is_current else
+            ('clue-gameboard__item--completed' if is_solved else
+            ('clue-gameboard__item--upcoming' if is_unlocked else 'clue-gameboard__item--locked'))
+          %}
+          <a href="{% if is_unlocked %}{{ url_for('game.play_clue', slug=campaign.slug) }}?jump={{ i }}{% else %}#{% endif %}"
+             class="clue-gameboard__item {{ state_class }}"
+             aria-current="{% if is_current %}step{% else %}false{% endif %}">
+            <span class="clue-gameboard__circle">
+              {{ i }}
+            </span>
+            <span class="clue-gameboard__label">Nyom {{ i }}</span>
+          </a>
+          {% if not loop.last %}
+            <span class="clue-gameboard__connector"></span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="mb-1">{{ clue.order_index }}. nyom: {{ clue.title }}</h4>
+
+        <div class="clue-header-meta mb-3">
+          <div class="clue-header-meta__reward">
+            {% if can_earn_clue_reward %}
+              <span class="clue-header-meta__label">Jutalom:</span>
+              <span class="clue-header-meta__item">
+                <i class="fa-solid fa-star clue-header-meta__icon"></i>
+                +{{ clue_xp }} XP
+              </span>
+              <span class="clue-header-meta__separator">·</span>
+              <span class="clue-header-meta__item">
+                <i class="fa-solid fa-coins clue-header-meta__icon"></i>
+                +{{ clue_coins }} coin
+              </span>
+            {% else %}
+              <span class="clue-header-meta__label clue-header-meta__label--muted">Jutalom már megszerezve ennél a nyomnál</span>
+            {% endif %}
+          </div>
+          <div class="clue-header-meta__progress text-muted small">
+            {{ percent }}% ({{ solved_indexes|length }}/{{ total_clues }})
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small">
+            <span>Előrehaladás</span>
+            <span>{{ percent }}% ({{ solved_indexes|length }}/{{ total_clues }})</span>
+          </div>
+          <div class="progress" role="progressbar" aria-label="Készültség" aria-valuenow="{{ percent }}"
+            aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" style="width: {{ percent }}%">{{ percent }}%</div>
+          </div>
+        </div>
+
+        <p>{{ clue.text }}</p>
+        {% if clue.hint %}
+<details class="mb-3">
+  <summary>Tipp</summary>
+  <div class="mt-2 text-muted">{{ clue.hint }}</div>
+</details>
+
+{% endif %}
+
+{% if clue.latitude and clue.longitude %}
+<div class="mt-3">
+  <button class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-between"
+          type="button" data-bs-toggle="collapse" data-bs-target="#mapCollapse"
+          aria-expanded="false" aria-controls="mapCollapse">
+    <span><i class="fa-solid fa-location-dot me-1"></i>Helyszín térképen</span>
+    <span class="small text-muted" id="mapToggleLabel">Lenyitás</span>
+  </button>
+
+  <div class="collapse mt-2" id="mapCollapse">
+    <div class="ratio ratio-16x9 rounded overflow-hidden border">
+      <div id="map" class="w-100 h-100"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var map, mapInitialized = false;
+    var collapseEl = document.getElementById('mapCollapse');
+
+    collapseEl.addEventListener('shown.bs.collapse', function () {
+      if (!mapInitialized) {
+        map = L.map('map', { scrollWheelZoom: false })
+                .setView([{{ clue.latitude }}, {{ clue.longitude }}], 17);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        L.marker([{{ clue.latitude }}, {{ clue.longitude }}]).addTo(map)
+          .bindPopup("<b>{{ clue.title|e }}</b>").openPopup();
+
+        mapInitialized = true;
+      } else {
+        // ha már volt inicializálva, csak frissítjük a méretet
+        setTimeout(function(){ map.invalidateSize(); }, 200);
+      }
+      document.getElementById('mapToggleLabel').textContent = 'Összecsukás';
+    });
+
+    collapseEl.addEventListener('hidden.bs.collapse', function () {
+      document.getElementById('mapToggleLabel').textContent = 'Lenyitás';
+    });
+  });
+</script>
+
+{% endif %}
+
+
+
+
+
+{% if view_only %}
+  <div class="alert alert-info mt-3">
+    Ezt a nyomot már megoldottad. Az aktuális nyomod sorszáma: {{ progress.current_order }}.
+  </div>
+  <a class="btn btn-outline-primary mt-2" href="{{ url_for('game.play_clue', slug=campaign.slug) }}">
+    Vissza az aktuális nyomhoz
+  </a>
+{% else %}
+  <form method="post" class="mt-3 d-flex flex-column gap-2">
+    <label class="form-label">Megoldókód (pl. évszám / felirat):</label>
+    <input type="text" name="answer" class="form-control" />
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-success" type="submit" name="action" value="answer">Ellenőrzés</button>
+      <button class="btn btn-outline-secondary" type="submit" name="action" value="skip">Következő nyom</button>
+    </div>
+  </form>
+{% endif %}
+
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}
